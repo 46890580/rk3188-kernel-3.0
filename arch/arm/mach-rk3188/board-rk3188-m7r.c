@@ -145,7 +145,7 @@ static struct ts_hw_data gsl3670_info = {
 #ifdef CONFIG_BACKLIGHT_RK29_BL
 #define PWM_ID            3
 #define PWM_MODE          PWM3
-#define PWM_EFFECT_VALUE  1
+#define PWM_EFFECT_VALUE  0
 
 #define LCD_DISP_ON_PIN
 
@@ -360,21 +360,21 @@ static int rk_fb_io_enable(void)
 
 #if defined(CONFIG_LCDC0_RK3066B) || defined(CONFIG_LCDC0_RK3188)
 struct rk29fb_info lcdc0_screen_info = {
-#if defined(CONFIG_RK_HDMI)
-	.prop		= EXTEND,       //extend display device
-	.lcd_info	= NULL,
-	.set_screen_info = hdmi_init_lcdc,
-#endif
+	.prop           = PRMRY,             //primary display device
+	.io_init        = rk_fb_io_init,
+	.io_disable     = rk_fb_io_disable,
+	.io_enable      = rk_fb_io_enable,
+	.set_screen_info = set_lcd_info,
 };
 #endif
 
 #if defined(CONFIG_LCDC1_RK3066B) || defined(CONFIG_LCDC1_RK3188)
 struct rk29fb_info lcdc1_screen_info = {
-	.prop		= PRMRY,                //primary display device
-	.io_init	= rk_fb_io_init,
-	.io_disable	= rk_fb_io_disable,
-	.io_enable	= rk_fb_io_enable,
-	.set_screen_info = set_lcd_info,
+#if defined(CONFIG_RK_HDMI)
+	.prop		= EXTEND,       //extend display device
+	.lcd_info	= NULL,
+	.set_screen_info = hdmi_init_lcdc,
+#endif
 };
 #endif
 
