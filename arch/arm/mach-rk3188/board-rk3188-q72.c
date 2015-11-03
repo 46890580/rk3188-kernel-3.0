@@ -1182,7 +1182,27 @@ struct rk29_keys_platform_data rk29_keys_pdata = {
 	.chn		= 1,  //chn: 0-7, if do not use ADC,set 'chn' -1
 };
 
+#define DOCK_DETECT_GPIO  RK30_PIN0_PB4
+int dock_detect(void)
+{
+	int ret = 0;
 
+	gpio_request(DOCK_DETECT_GPIO, "dock_detect");
+	gpio_direction_input(DOCK_DETECT_GPIO);
+
+	ret = gpio_get_value(DOCK_DETECT_GPIO);
+	gpio_free(DOCK_DETECT_GPIO);
+
+	ret = !ret;
+	/*
+	if(ret == 1)
+		printk("=== %s:  docked  ===\n",__func__);
+	else
+		printk("=== %s: undocked ===\n",__func__);
+	*/
+	return ret;
+}
+EXPORT_SYMBOL(dock_detect);
 
 static void __init machine_rk30_board_init(void)
 {
