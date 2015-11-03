@@ -45,6 +45,10 @@
 #include <linux/proc_fs.h>
 #include <linux/uaccess.h>
 
+#if defined(CONFIG_MACH_RK3188_Q72)
+#include <linux/regulator/consumer.h>
+#endif
+
 #if 0
 #define DBG(x...)   printk(KERN_INFO "[BT_RFKILL]: "x)
 #else
@@ -83,6 +87,11 @@ extern int rk29sdk_bt_power_state;
 extern int rk29sdk_wifi_power_state;
 #else
 #define WIFI_BT_POWER_TOGGLE    0
+#endif
+
+#if defined(CONFIG_MACH_RK3188_Q72)
+extern int wifi_bt_power_state;
+extern int wifi_bt_run_num;
 #endif
 
 struct rfkill_rk_data {
@@ -127,7 +136,7 @@ static const char bt_name[] =
     #else
         "ap6210_24M"
     #endif
-#elif defined(CONFIG_AP6210)
+#elif defined(CONFIG_AP6212)
         "ap6212"
 #elif defined(CONFIG_AP6330)
 		"ap6330"
@@ -320,6 +329,25 @@ void rfkill_rk_sleep_bt(bool sleep)
 }
 EXPORT_SYMBOL(rfkill_rk_sleep_bt);
 
+#if defined(CONFIG_MACH_RK3188_Q72)
+static void pmu_wifi_bt_power(int on)
+{
+	struct regulator *ldo = NULL;
+#if defined(CONFIG_KP_AXP22)
+	ldo = regulator_get(NULL, "DC1SW1");
+#endif
+	if(on) {
+		regulator_enable(ldo);
+		printk("%s: wifi power enable\n", __func__);
+	} else {
+		regulator_disable(ldo);
+		printk("%s: wifi power disable\n", __func__);
+	}
+	regulator_put(ldo);
+	udelay(100);
+}
+#endif
+
 static int rfkill_rk_set_power(void *data, bool blocked)
 {
 	struct rfkill_rk_data *rfkill = data;
@@ -332,6 +360,14 @@ static int rfkill_rk_set_power(void *data, bool blocked)
     DBG("Set blocked:%d\n", blocked);
 
 	if (false == blocked) { 
+#if defined(CONFIG_MACH_RK3188_Q72)
+		if (!wifi_bt_power_state) {
+			wifi_bt_power_state = 1;
+			pmu_wifi_bt_power(1);
+		}
+		wifi_bt_run_num++;
+#endif
+
         rfkill_rk_sleep_bt(BT_WAKEUP); // ensure bt is wakeup
 
 		if (gpio_is_valid(poweron->io))
@@ -373,6 +409,17 @@ static int rfkill_rk_set_power(void *data, bool blocked)
 #if WIFI_BT_POWER_TOGGLE
 		if (!rk29sdk_wifi_power_state) {
 #endif
+#if defined(CONFIG_MACH_RK3188_Q72)
+			if(wifi_bt_run_num == 1){
+				if(wifi_bt_power_state == 1)
+				{
+					wifi_bt_power_state = 0;
+					pmu_wifi_bt_power(0);
+				}
+			}
+			wifi_bt_run_num--;
+#endif
+
             if (gpio_is_valid(poweron->io))
             {      
                 gpio_direction_output(poweron->io, !poweron->enable);

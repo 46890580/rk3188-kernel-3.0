@@ -491,6 +491,30 @@ int rk29sdk_wifi_power(int on)
 }
 #else //---- #if (defined(CONFIG_RTL8192CU) || defined(CONFIG_RTL8188EU)....defined(CONFIG_MACH_RK3026_86V).
 
+#if defined(CONFIG_MACH_RK3188_Q72)
+int wifi_bt_power_state = 0;
+int wifi_bt_run_num = 0;
+#endif
+
+static void pmu_wifi_bt_power(int on)
+{
+#if 1
+	struct regulator *ldo = NULL;
+#if defined(CONFIG_KP_AXP22)
+	ldo = regulator_get(NULL, "DC1SW1");
+#endif
+	if(on) {
+		regulator_enable(ldo);
+		printk("%s: wifi power enable\n", __func__);
+	} else {
+		regulator_disable(ldo);
+		printk("%s: wifi power disable\n", __func__);
+	}
+	regulator_put(ldo);
+	udelay(100);
+#endif
+}
+
 int rk29sdk_wifi_power(int on)
 {
         pr_info("%s: %d\n", __func__, on);
@@ -499,6 +523,14 @@ int rk29sdk_wifi_power(int on)
 				if(wifi_pwr!=-1)
 					port_output_on(wifi_pwr);
 			#else
+				#if defined(CONFIG_MACH_RK3188_Q72)
+				if(wifi_bt_power_state == 0){
+					wifi_bt_power_state  = 1;
+					pmu_wifi_bt_power(1);
+				}
+				wifi_bt_run_num++;
+				#endif
+
                 gpio_set_value(rk_platform_wifi_gpio.power_n.io, rk_platform_wifi_gpio.power_n.enable);
 			#endif
                 mdelay(50);
@@ -522,6 +554,17 @@ int rk29sdk_wifi_power(int on)
 							port_output_off(wifi_pwr);
 				#else
 						gpio_set_value(rk_platform_wifi_gpio.power_n.io, !(rk_platform_wifi_gpio.power_n.enable));
+					#if defined(CONFIG_MACH_RK3188_Q72)
+						if(wifi_bt_run_num == 1){
+							if(wifi_bt_power_state == 1)
+							{
+								wifi_bt_power_state = 0;
+								pmu_wifi_bt_power(0);
+							}
+						}
+						wifi_bt_run_num--;
+					#endif
+
 				#endif
                         #if defined(CONFIG_USE_SDMMC0_FOR_WIFI_DEVELOP_BOARD)
                         rk29_sdmmc_gpio_open(0, 0);
