@@ -445,7 +445,11 @@ static int __init rk29sdk_wifi_bt_gpio_control_init(void)
     gpio_direction_output(rksdmmc1_gpio_init.data3_gpio.io,GPIO_LOW);//set mmc1-data3 to low.
     #endif
     
-    rk29_sdmmc_gpio_open(1, 1); //added by xbw at 2011-10-13
+    rk29_sdmmc_gpio_open(1, 0);
+    #ifdef CONFIG_AP6212
+    rk29_sdmmc_gpio_open(1, 1);
+    #endif
+
     #endif
 #endif//--#else //--#if defined(CONFIG_ARCH_RK319X) 
 
