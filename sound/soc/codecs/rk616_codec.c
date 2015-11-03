@@ -47,8 +47,13 @@
 #define  SPKOUT_VOLUME    24 //0~31
 #define  HPOUT_VOLUME     20 //0~31
 #else
+#if defined(CONFIG_MACH_RK3188_Q72)
+#define  SPKOUT_VOLUME    30 //0~31
+#define  HPOUT_VOLUME     30 //0~31
+#else
 #define  SPKOUT_VOLUME    24 //0~31
 #define  HPOUT_VOLUME     24 //0~31
+#endif
 #endif
 
 /* volume setting
