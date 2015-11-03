@@ -31,6 +31,8 @@
 
 #if defined(CONFIG_MACH_RK3188_Q72)
 #include "rockchip_gsl3670_q72.h"
+#elif defined(CONFIG_MACH_RK3188_M7R)
+#include "rockchip_gsl3670_m7r_800x480.h"
 #else
 #warning "Please check you hardware configuration"
 #endif

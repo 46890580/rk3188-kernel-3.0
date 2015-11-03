@@ -37,7 +37,10 @@
 #define CAMERA_POWERDN_BACK	RK30_PIN1_PB2
 #define CAMERA_POWERDN_FRONT	RK30_PIN3_PB4
 #define CAMERA_POWERDN_ADV7180	RK30_PIN3_PB5
-
+#elif	defined(CONFIG_MACH_RK3188_M7R)
+#define CAMERA_POWERDN_BACK     RK30_PIN1_PB2
+#define CAMERA_POWERDN_FRONT    RK30_PIN3_PB4
+#define CAMERA_POWERDN_ADV7180  RK30_PIN3_PB5
 #else
 #error "Please check the SCH of your board, add correct definition"
 #endif
@@ -76,6 +79,25 @@ static struct rkcamera_platform_data new_camera[] = {
 			3,
 			100000,
 			CONS(RK29_CAM_SENSOR_SP0718,_I2C_ADDR),
+			0,
+			24),
+#endif
+#if defined(CONFIG_MACH_RK3188_M7R)
+	new_camera_device_ex(RK29_CAM_SENSOR_GC0308,
+			front,
+			0,
+			INVALID_VALUE,
+			INVALID_VALUE,
+			INVALID_VALUE,
+			INVALID_VALUE,
+			CAMERA_POWERDN_FRONT,
+			CONS(RK29_CAM_SENSOR_GC0308,_PWRDN_ACTIVE),
+			false,
+			CONS(RK29_CAM_SENSOR_GC0308,_FULL_RESOLUTION),
+			0,
+			3,
+			100000,
+			CONS(RK29_CAM_SENSOR_GC0308,_I2C_ADDR),
 			0,
 			24),
 #endif
@@ -282,7 +304,7 @@ static void rk_cif_power(int on)
 		regulator_put(ldo_18);
 	}
 }
-#if	defined(CONFIG_MACH_RK3188_Q72)
+#if	defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R)
 #undef CONFIG_SENSOR_POWER_IOCTL_USR
 #define CONFIG_SENSOR_POWER_IOCTL_USR	   1
 
@@ -323,7 +345,7 @@ static void q72_rk_cif_power(int on)
 static int sensor_power_usr_cb (struct rk29camera_gpio_res *res,int on)
 {
 	//#error "CONFIG_SENSOR_POWER_IOCTL_USR is 1, sensor_power_usr_cb function must be writed!!";
-#if	defined(CONFIG_MACH_RK3188_Q72)
+#if	defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R)
 	q72_rk_cif_power(on);
 #else
 	rk_cif_power(on);

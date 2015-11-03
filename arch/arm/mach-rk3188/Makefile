@@ -25,5 +25,6 @@ board-$(CONFIG_MACH_RK3188_SDK) += board-rk3188-sdk.o
 board-$(CONFIG_MACH_RK3188_LR097) += ../mach-rk30/board-rk3168-LR097.o
 board-$(CONFIG_MACH_RK3188_DS1006H) += board-rk3188-ds1006h.o
 board-$(CONFIG_MACH_RK3188_Q72) += board-rk3188-q72.o
+board-$(CONFIG_MACH_RK3188_M7R) += board-rk3188-m7r.o
 obj-$(CONFIG_SOC_RK3188) += board.o
 board-$(CONFIG_MACH_RK3188_FAC) += board-rk3188-fac.o
