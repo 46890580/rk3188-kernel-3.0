@@ -1006,6 +1006,7 @@ static struct rk616_platform_data rk616_pdata = {
 	.lvds_ch_nr	= 1,            //the number of used lvds channel
 	.hdmi_irq	= INVALID_GPIO,
 	.spk_ctl_gpio	= RK30_PIN2_PD7,
+	.rcv_ctl_gpio   = RK30_PIN1_PA7,
 };
 #endif
 

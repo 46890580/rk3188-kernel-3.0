@@ -809,6 +809,10 @@ static int rk616_codec_power_up(int type)
 			RK616_VOL_MASK, 0); //, volume (bit 0-4)
 		snd_soc_update_bits(codec, RK616_SPKR_CTL,
 			RK616_VOL_MASK, 0);
+
+#if defined(CONFIG_MACH_RK3188_M7R)
+		rk616_set_gpio(RK616_CODEC_SET_RCV, GPIO_LOW);
+#endif
 	}
 
 	return 0;
@@ -853,6 +857,10 @@ static int rk616_codec_power_down(int type)
 	}
 
 	if (type & RK616_CODEC_INCALL) {
+
+#if defined(CONFIG_MACH_RK3188_M7R)
+		rk616_set_gpio(RK616_CODEC_SET_RCV, GPIO_HIGH);
+#endif
 		//close incall route
 		snd_soc_update_bits(codec, RK616_HPMIX_CTL,
 			RK616_HML_F_PGAL | RK616_HMR_F_PGAL,
