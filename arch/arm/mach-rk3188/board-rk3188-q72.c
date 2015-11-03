@@ -219,7 +219,7 @@ static struct rk_hdmi_platform_data rk_hdmi_pdata = {
 #define LCD_CS_VALUE       GPIO_HIGH
 
 #define LCD_EN_PIN         RK30_PIN0_PB0
-#define LCD_EN_VALUE       GPIO_HIGH
+#define LCD_EN_VALUE       GPIO_LOW
 
 static int rk_fb_io_init(struct rk29_fb_setting_info *fb_setting)
 {
@@ -283,21 +283,21 @@ static int rk_fb_io_enable(void)
 
 #if defined(CONFIG_LCDC0_RK3066B) || defined(CONFIG_LCDC0_RK3188)
 struct rk29fb_info lcdc0_screen_info = {
-	.prop	   = PRMRY,		//primary display device
-	.io_init   = rk_fb_io_init,
-	.io_disable = rk_fb_io_disable,
-	.io_enable = rk_fb_io_enable,
-	.set_screen_info = set_lcd_info,
+#if defined(CONFIG_RK_HDMI)
+	.prop		= EXTEND,       //extend display device
+	.lcd_info	= NULL,
+	.set_screen_info = hdmi_init_lcdc,
+#endif
 };
 #endif
 
 #if defined(CONFIG_LCDC1_RK3066B) || defined(CONFIG_LCDC1_RK3188)
 struct rk29fb_info lcdc1_screen_info = {
-#if defined(CONFIG_RK_HDMI)
-	.prop		= EXTEND,	//extend display device
-	.lcd_info  = NULL,
-	.set_screen_info = hdmi_init_lcdc,
-#endif
+	.prop		= PRMRY,                //primary display device
+	.io_init	= rk_fb_io_init,
+	.io_disable	= rk_fb_io_disable,
+	.io_enable	= rk_fb_io_enable,
+	.set_screen_info = set_lcd_info,
 };
 #endif
 
@@ -848,7 +848,7 @@ static struct platform_device *devices[] __initdata = {
 
 #if defined(CONFIG_MFD_RK616)
 #define RK616_RST_PIN 			RK30_PIN3_PB2
-#define RK616_PWREN_PIN			RK30_PIN0_PA3
+#define RK616_PWREN_PIN			INVALID_GPIO
 #define RK616_SCL_RATE			(100*1000)   //i2c scl rate
 static int rk616_power_on_init(void)
 {
@@ -880,28 +880,30 @@ static int rk616_power_on_init(void)
 
 static int rk616_power_deinit(void)
 {
-	gpio_set_value(RK616_PWREN_PIN,GPIO_LOW);
-	gpio_set_value(RK616_RST_PIN,GPIO_LOW);
-	gpio_free(RK616_PWREN_PIN);
-	gpio_free(RK616_RST_PIN);
+	if(RK616_PWREN_PIN != INVALID_GPIO)
+	{
+		gpio_set_value(RK616_PWREN_PIN,GPIO_LOW);
+		gpio_free(RK616_PWREN_PIN);
+	}
+
+	if(RK616_RST_PIN != INVALID_GPIO)
+	{
+		gpio_set_value(RK616_RST_PIN,GPIO_LOW);
+		gpio_free(RK616_RST_PIN);
+	}
 
 	return 0;
 }
 
 static struct rk616_platform_data rk616_pdata = {
-	.power_init = rk616_power_on_init,
-	.power_deinit = rk616_power_deinit,
-	.scl_rate   = RK616_SCL_RATE,
-	.lcd0_func = INPUT,             //port lcd0 as input
-#if defined(CONFIG_ONE_LCDC_DUAL_OUTPUT_INF) || defined(CONFIG_NO_DUAL_DISP)
-	.lcd1_func = UNUSED,             //port lcd1 unused
-#else
-	.lcd1_func = INPUT,             //port lcd1 as input
-#endif
-	.lvds_ch_nr = 1,		//the number of used lvds channel
-	.hdmi_irq = RK30_PIN2_PD6,
-	.spk_ctl_gpio = RK30_PIN2_PD7,
-	.hp_ctl_gpio = RK30_PIN2_PD7,
+	.power_init	= rk616_power_on_init,
+	.power_deinit	= rk616_power_deinit,
+	.scl_rate	= RK616_SCL_RATE,
+	.lcd0_func	= INPUT,        //port lcd0 as input
+	.lcd1_func	= INPUT,        //port lcd1 as input
+	.lvds_ch_nr	= 1,            //the number of used lvds channel
+	.hdmi_irq	= INVALID_GPIO,
+	.spk_ctl_gpio	= RK30_PIN2_PD7,
 };
 #endif
 
@@ -953,14 +955,6 @@ static struct i2c_board_info __initdata i2c0_info[] = {
 		.type          = "rk1000_control",
 		.addr          = 0x40,
 		.flags         = 0,
-	},
-#endif
-#if defined (CONFIG_MFD_RK616)
-	{
-		.type	       = "rk616",
-		.addr	       = 0x50,
-		.flags	       = 0,
-		.platform_data = &rk616_pdata,
 	},
 #endif
 
@@ -1027,6 +1021,14 @@ static struct i2c_board_info __initdata i2c3_info[] = {
 
 #ifdef CONFIG_I2C4_RK30
 static struct i2c_board_info __initdata i2c4_info[] = {
+#if defined (CONFIG_MFD_RK616)
+	{
+		.type		= "rk616",
+		.addr		= 0x50,
+		.flags		= 0,
+		.platform_data	= &rk616_pdata,
+	},
+#endif
 
 };
 #endif
