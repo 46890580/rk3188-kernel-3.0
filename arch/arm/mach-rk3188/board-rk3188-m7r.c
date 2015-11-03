@@ -1186,6 +1186,12 @@ static struct rk29_keys_button key_button[] = {
 	},
 #endif
 	{
+		.desc           = "menu",
+		.code           = EV_MENU,
+		.gpio           = RK30_PIN0_PD5,
+		.active_low     = PRESS_LEV_LOW,
+	},
+	{
 		.desc           = "vol+",
 		.code           = KEY_VOLUMEUP,
 		.adc_value      = 1,
@@ -1199,7 +1205,6 @@ static struct rk29_keys_button key_button[] = {
 		.gpio           = INVALID_GPIO,
 		.active_low     = PRESS_LEV_LOW,
 	},
-
 };
 
 struct rk29_keys_platform_data rk29_keys_pdata = {
