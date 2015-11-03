@@ -905,6 +905,13 @@ struct platform_device rk29_device_ug95 = {
 };
 #endif
 
+#if defined(CONFIG_M7R_GPS_UBLOX)
+struct platform_device gps_ublox = {
+	.name   = "gps_ublox",
+	.id     = -1,
+};
+#endif
+
 static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_ION
 	&device_ion,
@@ -933,6 +940,9 @@ static struct platform_device *devices[] __initdata = {
 #endif
 #ifdef CONFIG_UG95
 	&rk29_device_ug95,
+#endif
+#ifdef CONFIG_M7R_GPS_UBLOX
+	&gps_ublox,
 #endif
 
 };

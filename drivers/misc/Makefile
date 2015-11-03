@@ -64,3 +64,4 @@ obj-y += rk2928_callpad_misc/
 obj-$(CONFIG_MODEM_SOUND) += modem_sound.o
 obj-$(CONFIG_MTK_WIRELESS_SOLUTION)	+= mediatek/
 obj-$(CONFIG_TCC_BT_DEV)       += tcc_bt_dev.o
+obj-$(CONFIG_M7R_GPS_UBLOX)	+= m7r_gps_ublox.o

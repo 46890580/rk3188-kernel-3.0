@@ -563,6 +563,12 @@ config TCC_BT_DEV
 	help
 	  If you say Y here, you can contorl the power of the BT H/W Module
 
+config M7R_GPS_UBLOX
+	tristate "Ublox GPS module support on M7R"
+	default y
+	help
+	  If you say Y here, you can control the power of the GPS module on M7R.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
