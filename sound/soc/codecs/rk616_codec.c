@@ -839,7 +839,11 @@ static int rk616_codec_power_down(int type)
 	// mute output for pop noise
 	if ((type & RK616_CODEC_PLAYBACK) ||
 		(type & RK616_CODEC_INCALL)) {
+#if defined(CONFIG_MACH_RK3188_M7R)
+		/* We don't close SPK_CON on M7R */
+#else
 		rk616_set_gpio(RK616_CODEC_SET_SPK | RK616_CODEC_SET_HP, GPIO_LOW);
+#endif
 	}
 
 	if (type & RK616_CODEC_CAPTURE) {
