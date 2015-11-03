@@ -269,6 +269,7 @@
 #define RK29_CAM_ISP_ICATCH7002_OV5693  icatchov5693
 #define RK29_CAM_ISP_ICATCH7002_OV8825  icatchov8825   //zyt
 #define RK29_CAM_ISP_ICATCH7002_OV2720  icatchov2720   //zyt
+#define RK29_CAM_SENSOR_ADV7180	adv7180
 
 #define RK29_CAM_SENSOR_NAME_OV7675 "ov7675"
 #define RK29_CAM_SENSOR_NAME_OV9650 "ov9650"
@@ -311,7 +312,7 @@
 #define RK29_CAM_ISP_NAME_ICATCH7002_OV5693 "icatchov5693"
 #define RK29_CAM_ISP_NAME_ICATCH7002_OV8825 "icatchov8825" //zyt
 #define RK29_CAM_ISP_NAME_ICATCH7002_OV2720 "icatchov2720" //zyt
-
+#define RK29_CAM_SENSOR_NAME_ADV7180 "adv7180"
 
 
 #define gc2155_SENSOR_ORIENTATION 180
@@ -382,6 +383,7 @@
 #define icatchov5693_FULL_RESOLUTION 0x500000
 #define icatchov8825_FULL_RESOLUTION 0x800000					//zyt
 #define icatchov2720_FULL_RESOLUTION 0x210000                   //zyt
+#define adv7180_FULL_RESOLUTION     0x300000            // 3 megapixel
 #define end_FULL_RESOLUTION         0x00
 
 //Sensor i2c addr define
@@ -440,6 +442,7 @@
 #define icatchov5693_I2C_ADDR       0x78
 #define icatchov8825_I2C_ADDR       0x78  //zyt
 #define icatchov2720_I2C_ADDR       0x78  //zyt
+#define adv7180_I2C_ADDR            0x40
 #define end_I2C_ADDR                INVALID_VALUE
 
 
@@ -494,6 +497,7 @@
 #define hm2057_PWRDN_ACTIVE             0x01
 #define hm5065_PWRDN_ACTIVE             0x00
 #define mtk9335isp_PWRDN_ACTIVE         0x01 
+#define adv7180_PWRDN_ACTIVE            0x00
 #define end_PWRDN_ACTIVE                INVALID_VALUE
 
 
@@ -585,6 +589,8 @@
 #define icatchmi1040_PWRSEQ               (SENSOR_PWRSEQ_SET(SENSOR_PWRSEQ_PWR,0)|\
                                     SENSOR_PWRSEQ_SET(SENSOR_PWRSEQ_HWRST,2)|\
                                     SENSOR_PWRSEQ_SET(SENSOR_PWRSEQ_CLKIN,1))
+
+#define adv7180_PWRSEQ                 sensor_PWRSEQ_DEFAULT
 
 #define end_PWRSEQ                      0xffffffff
                                           

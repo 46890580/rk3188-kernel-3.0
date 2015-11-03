@@ -36,6 +36,7 @@
 #if defined(CONFIG_MACH_RK3188_Q72)
 #define CAMERA_POWERDN_BACK	RK30_PIN1_PB2
 #define CAMERA_POWERDN_FRONT	RK30_PIN3_PB4
+#define CAMERA_POWERDN_ADV7180	RK30_PIN3_PB5
 
 #else
 #error "Please check the SCH of your board, add correct definition"
@@ -75,6 +76,25 @@ static struct rkcamera_platform_data new_camera[] = {
 			3,
 			100000,
 			CONS(RK29_CAM_SENSOR_SP0718,_I2C_ADDR),
+			0,
+			24),
+#endif
+#if defined(CONFIG_SOC_CAMERA_ADV7180)
+	new_camera_device_ex(RK29_CAM_SENSOR_ADV7180,
+			adv7180,
+			0,
+			INVALID_VALUE,
+			INVALID_VALUE,
+			INVALID_VALUE,
+			INVALID_VALUE,
+			CAMERA_POWERDN_ADV7180,
+			CONS(RK29_CAM_SENSOR_ADV7180,_PWRDN_ACTIVE),
+			1,
+			CONS(RK29_CAM_SENSOR_ADV7180,_FULL_RESOLUTION),
+			0x00,
+			3,
+			100000,
+			CONS(RK29_CAM_SENSOR_ADV7180,_I2C_ADDR),
 			0,
 			24),
 #endif

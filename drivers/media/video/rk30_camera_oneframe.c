@@ -366,8 +366,12 @@ module_param(version, int, S_IRUGO);
 #define RK_CAM_FRAME_INVAL_INIT      3
 #define RK_CAM_FRAME_INVAL_DC        3          /* ddl@rock-chips.com :  */
 #define RK30_CAM_FRAME_MEASURE       5
-
-
+#if defined(CONFIG_SOC_CAMERA_ADV7180)
+static struct notifier_block adv7180_nb;
+static unsigned long adv7180_event;
+extern int adv7180_register_notifier(struct notifier_block *nb);
+extern int adv7180_unregister_notifier(struct notifier_block *nb);
+#endif
 extern void videobuf_dma_contig_free(struct videobuf_queue *q, struct videobuf_buffer *buf);
 extern dma_addr_t videobuf_to_dma_contig(struct videobuf_buffer *buf);
 
@@ -2066,7 +2070,155 @@ static void rk_camera_setup_format(struct soc_camera_device *icd, __u32 host_pix
     RKCAMERA_DG1("CIF_CIF_CROP:0x%x  CIF_CIF_FS:0x%x  CIF_CIF_FOR:0x%x\n",cif_crop,cif_fs,cif_fmt_val);
 	return;
 }
+#if defined(CONFIG_SOC_CAMERA_ADV7180)
+static int adv7180_notify_event(struct notifier_block *nb,	unsigned long data, void *extra)
+{
+	printk("adv7180_noify_event: data = 0x%x\n", data);
+	adv7180_event = data;
+	return 0;
+}
+#endif
+static void rk_camera_setup_format_tv_in(struct soc_camera_device *icd, __u32 host_pixfmt, enum v4l2_mbus_pixelcode icd_code, struct v4l2_rect *rect)
+{
+	struct soc_camera_host *ici = to_soc_camera_host(icd->dev.parent);
+	struct rk_camera_dev *pcdev = ici->priv;
+	unsigned int cif_fs = 0,cif_crop = 0;
+	v4l2_std_id stdid = 0;
 
+	unsigned int cif_fmt_val = read_cif_reg(pcdev->base,CIF_CIF_FOR) | INPUT_MODE_PAL | YUV_INPUT_422;
+
+	const struct soc_mbus_pixelfmt *fmt;
+	struct v4l2_subdev *sd;
+	int ret;
+
+	fmt = soc_mbus_get_fmtdesc(icd_code);
+	sd = soc_camera_to_subdev(icd);
+	v4l2_subdev_call(sd, video, querystd, &stdid);
+	cif_fmt_val &= ~( (7 << 2) | (1 << 7) | (1 << 8) | (1 << 9) | (1 << 16) | (1 << 17) );
+	if(ret == 0) {
+		if(stdid == V4L2_STD_NTSC) {
+			printk("%s ntsc\n", __FUNCTION__);
+			cif_fmt_val |= INPUT_MODE_NTSC;
+		}
+		else if(stdid == V4L2_STD_PAL) {
+			printk("%s pal\n", __FUNCTION__);
+			cif_fmt_val |= INPUT_MODE_PAL;
+		}
+		else {
+			printk("%s unkown std, set as pal\n", __FUNCTION__);
+			//	cif_fmt_val |= INPUT_MODE_NTSC;
+			cif_fmt_val |= INPUT_MODE_PAL;
+		}
+		cif_fmt_val |= (1 << 9);
+	}
+
+	if((host_pixfmt == V4L2_PIX_FMT_RGB565) || (host_pixfmt == V4L2_PIX_FMT_RGB24)){
+		if(fmt->fourcc == V4L2_PIX_FMT_NV12)
+			host_pixfmt = V4L2_PIX_FMT_NV12;
+		else if(fmt->fourcc == V4L2_PIX_FMT_NV21)
+			host_pixfmt = V4L2_PIX_FMT_NV21;
+	}
+	switch (host_pixfmt)
+	{
+		case V4L2_PIX_FMT_NV16:
+			cif_fmt_val &= ~YUV_OUTPUT_422;
+			cif_fmt_val &= ~UV_STORAGE_ORDER_UVUV;
+			pcdev->frame_inval = RK_CAM_FRAME_INVAL_DC;
+			pcdev->pixfmt = host_pixfmt;
+			break;
+		case V4L2_PIX_FMT_NV61:
+			cif_fmt_val &= ~YUV_OUTPUT_422;
+			cif_fmt_val |= UV_STORAGE_ORDER_VUVU;
+			pcdev->frame_inval = RK_CAM_FRAME_INVAL_DC;
+			pcdev->pixfmt = host_pixfmt;
+			break;
+		case V4L2_PIX_FMT_NV12:
+			printk("============= pix fmt nv12\n");
+			cif_fmt_val |= YUV_OUTPUT_420;
+			cif_fmt_val &= ~UV_STORAGE_ORDER_UVUV;
+			if (pcdev->frame_inval != RK_CAM_FRAME_INVAL_INIT)
+				pcdev->frame_inval = RK_CAM_FRAME_INVAL_INIT;
+			pcdev->pixfmt = host_pixfmt;
+			break;
+		case V4L2_PIX_FMT_NV21:
+			cif_fmt_val |= YUV_OUTPUT_420;
+			cif_fmt_val |= UV_STORAGE_ORDER_VUVU;
+			if (pcdev->frame_inval != RK_CAM_FRAME_INVAL_INIT)
+				pcdev->frame_inval = RK_CAM_FRAME_INVAL_INIT;
+			pcdev->pixfmt = host_pixfmt;
+			break;
+		default:                                                                                /* ddl@rock-chips.com : vip output format is hold when pixfmt is invalidate */
+			cif_fmt_val |= YUV_OUTPUT_422;
+			break;
+	}
+	switch (icd_code)
+	{
+		case V4L2_MBUS_FMT_UYVY8_2X8:
+			cif_fmt_val = YUV_INPUT_ORDER_UYVY(cif_fmt_val);
+			break;
+		case V4L2_MBUS_FMT_YUYV8_2X8:
+			cif_fmt_val = YUV_INPUT_ORDER_YUYV(cif_fmt_val);
+			break;
+		case V4L2_MBUS_FMT_YVYU8_2X8:
+			cif_fmt_val = YUV_INPUT_ORDER_YVYU(cif_fmt_val);
+			break;
+		case V4L2_MBUS_FMT_VYUY8_2X8:
+			cif_fmt_val = YUV_INPUT_ORDER_VYUY(cif_fmt_val);
+			break;
+		default :
+			cif_fmt_val = YUV_INPUT_ORDER_YUYV(cif_fmt_val);
+			break;
+	}
+#if 1
+	{
+#ifdef CONFIG_ARCH_RK30
+		mdelay(100);
+		if(IS_CIF0()){
+			//		pmu_set_idle_request(IDLE_REQ_VIO, true);
+			cru_set_soft_reset(SOFT_RST_CIF0, true);
+			udelay(5);
+			cru_set_soft_reset(SOFT_RST_CIF0, false);
+			//		pmu_set_idle_request(IDLE_REQ_VIO, false);
+
+		}else{
+			//	 	pmu_set_idle_request(IDLE_REQ_VIO, true);
+			cru_set_soft_reset(SOFT_RST_CIF1, true);
+			udelay(5);
+			cru_set_soft_reset(SOFT_RST_CIF1, false);
+			//		pmu_set_idle_request(IDLE_REQ_VIO, false);
+		}
+#endif
+		mdelay(100);
+		rk_camera_cif_reset(pcdev,true);
+
+	}
+	write_cif_reg(pcdev->base,CIF_CIF_CTRL,AXI_BURST_16|MODE_ONEFRAME|DISABLE_CAPTURE);   /* ddl@rock-chips.com : vip ahb burst 16 */
+	write_cif_reg(pcdev->base,CIF_CIF_INTEN, 0x01|0x200);    //capture complete interrupt enable
+#endif
+	write_cif_reg(pcdev->base,CIF_CIF_FOR,cif_fmt_val);         /* ddl@rock-chips.com: VIP capture mode and capture format must be set before FS register set */
+
+	// read_cif_reg(pcdev->base,CIF_CIF_INTSTAT);                     /* clear vip interrupte single  */
+	write_cif_reg(pcdev->base,CIF_CIF_INTSTAT,0xFFFFFFFF);
+	if((read_cif_reg(pcdev->base,CIF_CIF_CTRL) & MODE_PINGPONG)
+			||(read_cif_reg(pcdev->base,CIF_CIF_CTRL) & MODE_LINELOOP)) {
+		BUG();
+	} else{ // this is one frame mode
+		cif_crop = (rect->left+ (rect->top<<16));
+		cif_fs	= ((rect->width ) + (rect->height<<16));
+	}
+
+	printk("frame info: %dx%d at (%d,%d)\n", rect->width, rect->height, rect->left, rect->top);
+
+	write_cif_reg(pcdev->base,CIF_CIF_CROP, cif_crop);
+	write_cif_reg(pcdev->base,CIF_CIF_SET_SIZE, cif_fs);
+	write_cif_reg(pcdev->base,CIF_CIF_VIR_LINE_WIDTH, rect->width);
+	write_cif_reg(pcdev->base,CIF_CIF_FRAME_STATUS,  0x00000003);
+
+	//MUST bypass scale
+	write_cif_reg(pcdev->base,CIF_CIF_SCL_CTRL,0x10);
+	RKCAMERA_DG2("%s.. crop:0x%x fs:0x%x cif_fmt_val:0x%x CIF_CIF_FOR:0x%x\n",__FUNCTION__,cif_crop,cif_fs,cif_fmt_val,read_cif_reg(pcdev->base,CIF_CIF_FOR));
+	return;
+}
 static int rk_camera_get_formats(struct soc_camera_device *icd, unsigned int idx,
 				  struct soc_camera_format_xlate *xlate)
 {
@@ -2440,9 +2592,16 @@ static int rk_camera_set_fmt(struct soc_camera_device *icd,
 			           pcdev->cropinfo.bounds.width,pcdev->cropinfo.bounds.height,
 			           pcdev->zoominfo.a.c.width,pcdev->zoominfo.a.c.height, pcdev->zoominfo.a.c.left,pcdev->zoominfo.a.c.top,
 			           pix->width, pix->height);
-			           
-        rk_camera_setup_format(icd, pix->pixelformat, mf.code, &rect); 
-        
+#if defined(CONFIG_SOC_CAMERA_ADV7180)
+	if(adv7180_event == 1){
+		rk_camera_setup_format_tv_in(icd, pix->pixelformat, mf.code, &rect);
+		adv7180_event = 0;
+	}else{
+		rk_camera_setup_format(icd, pix->pixelformat, mf.code, &rect);
+	}
+#else
+	rk_camera_setup_format(icd, pix->pixelformat, mf.code, &rect);
+#endif
 		if (CAM_IPPWORK_IS_EN()) {
 			BUG_ON(pcdev->vipmem_phybase == 0);
 		}
@@ -3537,6 +3696,10 @@ static int rk_camera_probe(struct platform_device *pdev)
 #elif(CONFIG_CAMERA_SCALE_CROP_MACHINE == RK_CAM_SCALE_CROP_PP)
 	pcdev->icd_cb.scale_crop_cb = rk_camera_scale_crop_pp; 
 #endif
+#if defined(CONFIG_SOC_CAMERA_ADV7180)
+    adv7180_nb.notifier_call = adv7180_notify_event;
+    adv7180_register_notifier(&adv7180_nb);
+#endif
     return 0;
 
 exit_free_irq:
@@ -3635,6 +3798,9 @@ static int __devexit rk_camera_remove(struct platform_device *pdev)
 
     dev_info(&pdev->dev, "RK28 Camera driver unloaded\n");
 
+#if defined(CONFIG_SOC_CAMERA_ADV7180)
+    adv7180_unregister_notifier(&adv7180_nb);
+#endif
     return 0;
 }
 

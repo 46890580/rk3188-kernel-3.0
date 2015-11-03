@@ -882,6 +882,12 @@ config SOC_CAMERA_PLATFORM
 menu "ROCKCHIP SUPPORTED SOC CAMERAS"
 	depends on SOC_CAMERA
 
+config SOC_CAMERA_ADV7180
+	tristate "ADV7180 support for rockchip"
+	depends on SOC_CAMERA && I2C
+	help
+	  This is a ADV7180 camera driver for rockchip
+
 config SOC_CAMERA_MT9T111
 	tristate "mt9t111 support for rockchip"
 	depends on SOC_CAMERA && I2C
