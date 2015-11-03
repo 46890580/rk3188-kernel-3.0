@@ -1353,6 +1353,7 @@ static struct device_type wwan_type = {
 	.name	= "wwan",
 };
 
+extern char GetSNSectorInfo(char * pbuf);
 int
 usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
 {
@@ -1393,6 +1394,15 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
 		dbg ("can't kmalloc dev");
 		goto out;
 	}
+
+	printk("%d-MAC : %02x:%02x:%02x:%02x:%02x:%02x\n",
+			__LINE__,
+			net->dev_addr[0],
+			net->dev_addr[1],
+			net->dev_addr[2],
+			net->dev_addr[3],
+			net->dev_addr[4],
+			net->dev_addr[5]);
 
 	/* netdev_printk() needs this so do it as early as possible */
 	SET_NETDEV_DEV(net, &udev->dev);
@@ -1498,6 +1508,46 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
 		   xdev->bus->bus_name, xdev->devpath,
 		   dev->driver_info->description,
 		   net->dev_addr);
+	if ((net->dev_addr[0] == 0x00) &&
+			(net->dev_addr[1] == 0x00) &&
+			(net->dev_addr[2] == 0x00) &&
+			(net->dev_addr[3] == 0x00) &&
+			(net->dev_addr[4] == 0x00) &&
+			(net->dev_addr[5] == 0x00) )
+	{
+		char *tempbuf = (char *)kmalloc(512, GFP_KERNEL);
+		char mac[7] = {0};
+		int i;
+
+		GetSNSectorInfo(tempbuf);
+
+		for(i=506; i<=511; i++)
+		{
+			printk("tempBuf[%d]=%x\n", i, tempbuf[i]);
+			mac[511-i] = tempbuf[i];
+		}
+		kfree(tempbuf);
+
+		net->dev_addr[0] = mac[5];
+		net->dev_addr[1] = mac[4];
+		net->dev_addr[2] = mac[3];
+		net->dev_addr[3] = mac[2];
+		net->dev_addr[4] = mac[1];
+		net->dev_addr[5] = mac[0];
+		if (!is_valid_ether_addr(net->dev_addr))
+		{
+			printk("ether addr is not valid!!!,and used random macaddr.\n");
+			random_ether_addr(net->dev_addr);
+		}
+	}
+
+	netif_info(dev, probe, dev->net,
+		   "register '%s' at usb-%s-%s, %s, %pM\n",
+		   udev->dev.driver->name,
+		   xdev->bus->bus_name, xdev->devpath,
+		   dev->driver_info->description,
+		   net->dev_addr);
+
 
 	// ok, it's ready to go.
 	usb_set_intfdata (udev, dev);
