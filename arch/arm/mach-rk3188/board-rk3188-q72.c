@@ -204,6 +204,22 @@ static struct platform_device rk29_device_backlight = {
 
 #endif
 
+/* TC74 temperature sensor */
+#if defined (CONFIG_TMP_TC74)
+static int tc74_init_platform_hw(void)
+{
+	printk("tc74 hardware init\n");
+	return 0;
+}
+
+static struct sensor_platform_data tc74_platdata = {
+	.type = SENSOR_TYPE_TEMPERATURE,
+	.irq_enable = 0,
+	.poll_delay_ms = 300,
+	.init_platform_hw = tc74_init_platform_hw,
+};
+#endif
+
 /*MMA8452 gsensor*/
 #if defined (CONFIG_GS_MMA8452)
 #define MMA8452_INT_PIN   RK30_PIN0_PB7
@@ -978,6 +994,14 @@ static struct i2c_board_info __initdata i2c0_info[] = {
 		.flags	        = 0,
 		.irq	        = MMA8452_INT_PIN,
 		.platform_data = &mma8452_info,
+	},
+#endif
+#if defined (CONFIG_TMP_TC74)
+	{
+		.type		= "tmp_tc74",
+		.addr		= 0x48,
+		.flags		= 0,
+		.platform_data	= &tc74_platdata,
 	},
 #endif
 #if defined (CONFIG_SND_SOC_RK1000)

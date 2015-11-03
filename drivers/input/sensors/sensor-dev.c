@@ -1961,6 +1961,7 @@ static const struct i2c_device_id sensor_id[] = {
 	/*temperature*/
 	{"temperature", TEMPERATURE_ID_ALL},	
 	{"tmp_ms5607", TEMPERATURE_ID_MS5607},
+	{"tmp_tc74", TEMPERATURE_ID_TC74},
 
 	/*pressure*/
 	{"pressure", PRESSURE_ID_ALL},

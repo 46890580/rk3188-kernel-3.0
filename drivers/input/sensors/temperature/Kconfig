@@ -11,4 +11,8 @@ if TEMPERATURE_DEVICE
  bool "temperature sensor ms5607"
  default n
  
+ config TMP_TC74
+ bool "temperature sensor tc74"
+ default n
+
 endif
