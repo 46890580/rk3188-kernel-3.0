@@ -28,6 +28,9 @@ config TOUCHSCREEN_GSLX680_RK3168
 config TOUCHSCREEN_GSLX680_RK3028
 		tristate "gslX680 rk3028 touchscreen panel support "
 		depends on I2C2_RK29 || I2C2_RK30
+config TOUCHSCREEN_GSL3670
+	tristate "gsl3670 touchscreen panel support"
+	depends on I2C2_RK29 || I2C2_RK30
 config TOUCHSCREEN_XPT2046_SPI
 	tristate "XPT2046 based touchscreens:SPI Interface"
 	depends on SPIM_RK29

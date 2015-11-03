@@ -73,6 +73,45 @@
 static struct spi_board_info board_spi_devices[] = {
 };
 
+/* GSL3670 touchpad */
+#if defined (CONFIG_TOUCHSCREEN_GSL3670)
+
+#define TOUCH_RESET_PIN         RK30_PIN0_PB6
+#define TOUCH_INT_PIN           RK30_PIN1_PB7
+
+static int gsl3670_init_platform_hw(void)
+{
+	printk(">>>> gsl3670_init_platform_hw <<<<\n");
+	if(gpio_request(TOUCH_RESET_PIN,NULL) != 0){
+		gpio_free(TOUCH_RESET_PIN);
+		printk("gsl3670_init_platform_hw gpio_request(rst) error\n");
+		return -EIO;
+	}
+
+	if(gpio_request(TOUCH_INT_PIN,NULL) != 0){
+		gpio_free(TOUCH_INT_PIN);
+		printk("gsl3670_init_platform_hw gpio_request(int) error\n");
+		return -EIO;
+	}
+
+	gpio_direction_output(TOUCH_RESET_PIN, 0);
+	gpio_set_value(TOUCH_RESET_PIN,GPIO_LOW);
+	mdelay(10);
+	gpio_direction_input(TOUCH_INT_PIN);
+	mdelay(10);
+	gpio_set_value(TOUCH_RESET_PIN,GPIO_HIGH);
+	msleep(300);
+
+	return 0;
+}
+
+static struct ts_hw_data gsl3670_info = {
+	.reset_gpio	= TOUCH_RESET_PIN,
+	.touch_en_gpio	= TOUCH_INT_PIN,
+	.init_platform_hw = gsl3670_init_platform_hw,
+};
+
+#endif
 
 /***********************************************************
  *	rk30  backlight
@@ -1009,6 +1048,15 @@ void  rk30_pwm_resume_voltage_set(void)
 
 #ifdef CONFIG_I2C2_RK30
 static struct i2c_board_info __initdata i2c2_info[] = {
+#if defined (CONFIG_TOUCHSCREEN_GSL3670)
+	{
+		.type		= "gsl3670",
+		.addr		= 0x40,
+		.flags		= 0,
+		.irq		= TOUCH_INT_PIN,
+		.platform_data	= &gsl3670_info,
+	},
+#endif
 
 };
 

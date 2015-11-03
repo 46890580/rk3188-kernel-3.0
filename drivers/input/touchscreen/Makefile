@@ -108,3 +108,8 @@ obj-$(CONFIG_TOUCHSCREEN_GSLX680_RK3028)	+= rockchip_gslX680_rk3028.o
 obj-$(CONFIG_TP_760_TS)                    += tp_760_ts.o
 obj-y += zet62xx/
 obj-y += aw5x0x/
+
+ifdef CONFIG_TOUCHSCREEN_GSL3670
+obj-y += gsl_point_id.o
+endif
+obj-$(CONFIG_TOUCHSCREEN_GSL3670)       += rockchip_gsl3670.o
