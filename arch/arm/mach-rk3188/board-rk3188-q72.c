@@ -1082,60 +1082,36 @@ static void __init rk30_i2c_register_board_info(void)
 #include <plat/key.h>
 
 static struct rk29_keys_button key_button[] = {
+#if 0   /* KEY_POWER report by PMU driver */
 	{
-		.desc   = "vol-",
-		.code   = KEY_VOLUMEDOWN,
-		.adc_value      = 745,
-		.gpio   = INVALID_GPIO,
-		.active_low = PRESS_LEV_LOW,
+		.desc           = "play",
+		.code           = KEY_POWER,
+		.gpio           = RK30_PIN0_PA4,
+		.active_low     = PRESS_LEV_LOW,
+		.wakeup         = 1,
 	},
+#endif
 	{
-		.desc   = "play",
-		.code   = KEY_POWER,
-		.gpio   = RK30_PIN0_PA4,
-		.active_low = PRESS_LEV_LOW,
-		.wakeup = 1,
-	},
-	{
-		.desc   = "vol+",
-		.code   = KEY_VOLUMEUP,
-		.adc_value      = 560,
-		.gpio = INVALID_GPIO,
-		.active_low = PRESS_LEV_LOW,
-	},
-	{
-		.desc   = "menu",
-		.code   = EV_MENU,
+		.desc           = "vol+",
+		.code           = KEY_VOLUMEUP,
 		.adc_value      = 1,
-		.gpio = INVALID_GPIO,
-		.active_low = PRESS_LEV_LOW,
+		.gpio           = INVALID_GPIO,
+		.active_low     = PRESS_LEV_LOW,
 	},
 	{
-		.desc   = "home",
-		.code   = KEY_HOME,
-		.adc_value      = 354,
-		.gpio = INVALID_GPIO,
-		.active_low = PRESS_LEV_LOW,
+		.desc           = "vol-",
+		.code           = KEY_VOLUMEDOWN,
+		.adc_value      = 512,
+		.gpio           = INVALID_GPIO,
+		.active_low     = PRESS_LEV_LOW,
 	},
-	{
-		.desc   = "esc",
-		.code   = KEY_BACK,
-		.adc_value      = 171,
-		.gpio = INVALID_GPIO,
-		.active_low = PRESS_LEV_LOW,
-	},
-	{
-		.desc	= "camera",
-		.code	= KEY_CAMERA,
-		.adc_value	= 742,
-		.gpio = INVALID_GPIO,
-		.active_low = PRESS_LEV_LOW,
-	},
+
 };
+
 struct rk29_keys_platform_data rk29_keys_pdata = {
 	.buttons	= key_button,
 	.nbuttons	= ARRAY_SIZE(key_button),
-	.chn	= 1,  //chn: 0-7, if do not use ADC,set 'chn' -1
+	.chn		= 1,  //chn: 0-7, if do not use ADC,set 'chn' -1
 };
 
 
