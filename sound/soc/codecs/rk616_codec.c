@@ -692,6 +692,14 @@ static struct rk616_reg_val_typ playback_power_up_list[] = {
 };
 #define RK616_CODEC_PLAYBACK_POWER_UP_LIST_LEN ARRAY_SIZE(playback_power_up_list)
 
+#ifdef CONFIG_SND_RK_SOC_RK616_NOPOWEROFF
+static struct rk616_reg_val_typ playback_power_down_list[] = {
+	{0x898, 0x60}, //mute HPOUTR (bit 5), volume (bit 0-4) // Per Jon Fether, Vizualogic. Do not power down HPOUTR amp; makes pop.
+	{0x894, 0x60}, //mute HPOUTL (bit 5), volume (bit 0-4) // Per Jon Fether, Vizualogic. Do not power down HPOUTR amp; makes pop.
+	{0x890, 0x60}, //mute SPKOUTR (bit 5), volume (bit 0-4) // Per Jon Fether, Vizualogic. Do not power down SPKOUTR amp; makes pop.
+	{0x88c, 0x60}, //mute SPKOUTL (bit 5), volume (bit 0-4) // Per Jon Fether, Vizualogic. Do not power down SPKOUTL amp; makes pop.
+};
+#else
 static struct rk616_reg_val_typ playback_power_down_list[] = {
 	{0x898, 0xe0}, //mute HPOUTR (bit 5), volume (bit 0-4)
 	{0x894, 0xe0}, //mute HPOUTL (bit 5), volume (bit 0-4)
@@ -702,6 +710,7 @@ static struct rk616_reg_val_typ playback_power_down_list[] = {
 	{0x86c, 0x3f}, //DACL/R INIT
 	{0x868, 0xff}, //power down
 };
+#endif
 #define RK616_CODEC_PLAYBACK_POWER_DOWN_LIST_LEN ARRAY_SIZE(playback_power_down_list)
 
 static struct rk616_reg_val_typ capture_power_up_list[] = {

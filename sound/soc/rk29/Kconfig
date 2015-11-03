@@ -269,6 +269,14 @@ config SND_RK_SOC_RK616
 	  Say Y if you want to add support for SoC audio on rockchip
 	  with the RK616(JETTA).
 
+if SND_RK_SOC_RK616
+config SND_RK_SOC_RK616_NOPOWEROFF
+	bool "Do not power off RK616 CODEC when audio stops"
+	default n
+	help
+	Disable power-off code for RK616 CODEC. Used to reduce popping noise from DC Offset change on power-up.
+endif
+
 config SND_RK_SOC_RK2928
 	tristate "SoC I2S Audio support for rockchip - RK2928"
 	depends on SND_RK29_SOC && ARCH_RK2928
