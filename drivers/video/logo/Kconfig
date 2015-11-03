@@ -119,4 +119,12 @@ config LOGO_LINUX_BMP_ANDROID
         bool "Bmp logo android"
         depends on  LOGO_LINUX_BMP
         default n
+config LOGO_LINUX_BMP_SMARTLOGIC_800X1280
+        bool "Bmp logo SmartLogic 800x1280"
+        depends on LOGO_LINUX_BMP
+        default n
+config LOGO_LINUX_BMP_SMARTLOGIC_1280X800
+        bool "Bmp logo SmartLogic 1280x800"
+	depends on LOGO_LINUX_BMP
+	default n
 endif # LOGO

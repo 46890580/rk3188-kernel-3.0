@@ -149,6 +149,14 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 			logo = &logo_android_bmp;
 			#endif
 			
+			#ifdef CONFIG_LOGO_LINUX_BMP_SMARTLOGIC_800X1280
+		        logo = &logo_smartlogic_800x1280_bmp;
+	                #endif
+
+			#ifdef CONFIG_LOGO_LINUX_BMP_SMARTLOGIC_1280X800
+		        logo = &logo_smartlogic_1280x800_bmp;
+	                #endif
+
 			#endif	
 		}
 		else
