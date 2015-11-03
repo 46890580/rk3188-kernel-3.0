@@ -9,6 +9,9 @@ config LCD_RK2928
 	bool "RK2928 LCD"
         depends on MACH_RK2928
 
+config LCD_NJ101IA
+	bool "Innolux LVDS LCD NJ101IA"
+
 config LCD_LG_LP097X02
 	bool "RGB LCD_LG_LP097X02 1024X768"
 
