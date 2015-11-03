@@ -1253,6 +1253,10 @@ static void __init machine_rk30_board_init(void)
 	rk29sdk_wifi_combo_module_gpio_init();
 #endif
 
+	/* Enable power of USB HUB */
+	gpio_request(RK30_PIN0_PD4, "usb hub on");
+	gpio_direction_output(RK30_PIN0_PD4, GPIO_HIGH);
+
 }
 #define HD_SCREEN_SIZE 1920UL*1200UL*4*3
 static void __init rk30_reserve(void)
