@@ -4,3 +4,4 @@ obj-$(CONFIG_MT6229)   += mt6229.o
 obj-$(CONFIG_SEW868)   += sew868.o
 obj-$(CONFIG_MI700)   += mi700.o
 obj-$(CONFIG_SC6610)   += sc6610.o
+obj-$(CONFIG_UG95)     += ug95.o

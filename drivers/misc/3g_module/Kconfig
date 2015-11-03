@@ -11,6 +11,9 @@ choice
 	depends on 3G_MODULE
 	prompt  "Select 3G Module"
 
+    config UG95
+        bool "UG95"
+
     config MU509
   	bool "MU509"
 

@@ -94,6 +94,10 @@
 #include <linux/board-id.h>
 #endif
 
+#if defined(CONFIG_UG95)
+#include <linux/ug95.h>
+#endif
+
 #include "board-rk3188-q72-camera.c"
 
 static struct spi_board_info board_spi_devices[] = {
@@ -894,6 +898,13 @@ static struct platform_device device_rfkill_rk = {
 };
 #endif
 
+#if defined(CONFIG_UG95)
+struct platform_device rk29_device_ug95 = {
+	.name = "UG95",
+	.id = -1,
+};
+#endif
+
 static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_ION
 	&device_ion,
@@ -920,6 +931,10 @@ static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_ARCH_RK3188)
 	&device_mali,
 #endif
+#ifdef CONFIG_UG95
+	&rk29_device_ug95,
+#endif
+
 };
 
 
