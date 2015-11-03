@@ -262,7 +262,7 @@
 /*
 	AXP22:0-驱动马达，1-由充电功能控制
 */
-#define CHGLEDFUN			0
+#define CHGLEDFUN			1
 /* CHGLED LED 类型设置*/
 /*
 	AXP22:0-充电时led长亮，1-充电时led闪烁
