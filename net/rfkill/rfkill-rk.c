@@ -45,7 +45,7 @@
 #include <linux/proc_fs.h>
 #include <linux/uaccess.h>
 
-#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R)
+#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
 #include <linux/regulator/consumer.h>
 #endif
 
@@ -89,7 +89,7 @@ extern int rk29sdk_wifi_power_state;
 #define WIFI_BT_POWER_TOGGLE    0
 #endif
 
-#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R)
+#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
 extern int wifi_bt_power_state;
 extern int wifi_bt_run_num;
 #endif
@@ -329,21 +329,34 @@ void rfkill_rk_sleep_bt(bool sleep)
 }
 EXPORT_SYMBOL(rfkill_rk_sleep_bt);
 
-#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R)
+#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
 static void pmu_wifi_bt_power(int on)
 {
 	struct regulator *ldo = NULL;
 #if defined(CONFIG_KP_AXP22)
 	ldo = regulator_get(NULL, "DC1SW1");
 #endif
+#if defined(CONFIG_MACH_RK3188_A1013)
+	gpio_request(RK30_PIN0_PA3, NULL);
+#endif
 	if(on) {
 		regulator_enable(ldo);
+#if defined(CONFIG_MACH_RK3188_A1013)
+		gpio_direction_output(RK30_PIN0_PA3, GPIO_HIGH);
+#endif
 		printk("%s: wifi power enable\n", __func__);
 	} else {
+#if defined(CONFIG_MACH_RK3188_A1013)
+		gpio_direction_output(RK30_PIN0_PA3, GPIO_LOW);
+#endif
 		regulator_disable(ldo);
 		printk("%s: wifi power disable\n", __func__);
 	}
 	regulator_put(ldo);
+#if defined(CONFIG_MACH_RK3188_A1013)
+	gpio_free(RK30_PIN0_PA3);
+#endif
+
 	udelay(100);
 }
 #endif
@@ -360,7 +373,7 @@ static int rfkill_rk_set_power(void *data, bool blocked)
     DBG("Set blocked:%d\n", blocked);
 
 	if (false == blocked) { 
-#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R)
+#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
 		if (!wifi_bt_power_state) {
 			wifi_bt_power_state = 1;
 			pmu_wifi_bt_power(1);
@@ -409,7 +422,7 @@ static int rfkill_rk_set_power(void *data, bool blocked)
 #if WIFI_BT_POWER_TOGGLE
 		if (!rk29sdk_wifi_power_state) {
 #endif
-#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R)
+#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
 			if(wifi_bt_run_num == 1){
 				if(wifi_bt_power_state == 1)
 				{
