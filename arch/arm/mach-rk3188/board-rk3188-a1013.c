@@ -134,6 +134,13 @@ static struct ts_hw_data ft5526_info = {
 };
 #endif
 
+#if defined (CONFIG_TOUCHSCREEN_ILITEK2302M)
+
+#define TOUCH_RESET_PIN  RK30_PIN0_PB6
+#define TOUCH_INT_PIN    RK30_PIN1_PB7
+
+#endif
+
 
 /***********************************************************
  *	rk30  backlight
@@ -1086,6 +1093,14 @@ static struct i2c_board_info __initdata i2c2_info[] = {
 		.flags		= 0,
 		.irq		= TOUCH_INT_PIN,
 		.platform_data	= &ft5526_info,
+	},
+#endif
+#if defined (CONFIG_TOUCHSCREEN_ILITEK2302M)
+	{
+		.type		= "ilitek_i2c",
+		.addr		= 0x41,
+		.flags		= 0,
+		.irq		= TOUCH_INT_PIN,
 	},
 #endif
 
