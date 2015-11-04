@@ -1263,6 +1263,15 @@ static void __init machine_rk30_board_init(void)
 	/* Enable power of USB HUB */
 	gpio_request(RK30_PIN0_PD6, "usb hub on");
 	gpio_direction_output(RK30_PIN0_PD6, GPIO_HIGH);
+
+	/* enable PA TDA7491LP
+	 * FIXME: this should put to the right place of codec driver
+	 */
+	gpio_request(RK30_PIN3_PD3, "stdy");
+	gpio_direction_output(RK30_PIN3_PD3, GPIO_HIGH);
+
+	gpio_request(RK30_PIN3_PD4, "mute");
+	gpio_direction_output(RK30_PIN3_PD4, GPIO_HIGH);
 }
 #define HD_SCREEN_SIZE 1920UL*1200UL*4*3
 static void __init rk30_reserve(void)
