@@ -38,6 +38,9 @@ config MACH_RK3188_Q72
 config MACH_RK3188_M7R
 	bool "RK3188 M7R board"
 
+config MACH_RK3188_A1013
+	bool "RK3188 A1013 board"
+
 config MACH_RK3188_FAC
         bool "RK3188 Board for factory"
         select MACH_RK_FAC
