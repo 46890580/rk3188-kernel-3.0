@@ -100,6 +100,41 @@
 static struct spi_board_info board_spi_devices[] = {
 };
 
+#if defined(CONFIG_TOUCHSCREEN_FT5X0X)
+
+#define TOUCH_RESET_PIN		RK30_PIN0_PB6
+#define TOUCH_INT_PIN		RK30_PIN1_PB7
+
+int ft5526_init_platform_hw(void)
+{
+	if(gpio_request(TOUCH_RESET_PIN, NULL) != 0){
+		gpio_free(TOUCH_RESET_PIN);
+		printk("%s gpio_request error\n", __FUNCTION__);
+		return -EIO;
+	}
+
+	if(gpio_request(TOUCH_INT_PIN, NULL) != 0){
+		printk("%s gpio_request error\n", __FUNCTION__);
+		return -EIO;
+	}
+
+	gpio_direction_output(TOUCH_RESET_PIN, 0);
+	gpio_set_value(TOUCH_RESET_PIN, GPIO_LOW);
+	mdelay(10);
+	gpio_direction_input(TOUCH_INT_PIN);
+	mdelay(10);
+	gpio_set_value(TOUCH_RESET_PIN, GPIO_HIGH);
+	msleep(300);
+	return 0;
+}
+static struct ts_hw_data ft5526_info = {
+	.reset_gpio	= TOUCH_RESET_PIN,
+	.touch_en_gpio	= TOUCH_INT_PIN,
+	.init_platform_hw = ft5526_init_platform_hw,
+};
+#endif
+
+
 /***********************************************************
  *	rk30  backlight
  ************************************************************/
@@ -1044,6 +1079,16 @@ void  rk30_pwm_resume_voltage_set(void)
 
 #ifdef CONFIG_I2C2_RK30
 static struct i2c_board_info __initdata i2c2_info[] = {
+#if defined (CONFIG_TOUCHSCREEN_FT5X0X)
+	{
+		.type		= "ft5x0x_ts",
+		.addr		= 0x38,
+		.flags		= 0,
+		.irq		= TOUCH_INT_PIN,
+		.platform_data	= &ft5526_info,
+	},
+#endif
+
 };
 
 #endif

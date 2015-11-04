@@ -32,7 +32,10 @@
 #define I2C_SPEED 200*1000
 #define MAX_POINT  5
 
-#if defined (CONFIG_TOUCHSCREEN_1024X768)
+#if defined (CONFIG_TOUCHSCREEN_1280X800)
+#define SCREEN_MAX_X 1280
+#define SCREEN_MAX_Y 800
+#elif defined (CONFIG_TOUCHSCREEN_1024X768)
 #define SCREEN_MAX_X 1024
 #define SCREEN_MAX_Y 768
 #elif defined (CONFIG_TOUCHSCREEN_1024X600)
@@ -458,7 +461,11 @@ static int ft5x0x_process_points(struct ft5x0x_data *data)
         //printk("%d-%d(%d,%d)%d-%d\n", id, status, x, y, p, w);
 		DBG("TOUCH_NO=%d: ID=%d,(X=%d,Y=%d), status=%d, pressure=%d, w=%d\n", i, id, x, y, status, 0, 0);
 
+#if defined(CONFIG_MACH_RK3188_A1013)
+		if ((SCREEN_MAX_X - x) < (SCREEN_MAX_X + 10)) {
+#else
 		if (x < (SCREEN_MAX_X + 10)) {
+#endif
 			if (status == 1) {
 				input_mt_slot(data->input_dev, id);
 				input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, false);
@@ -466,8 +473,14 @@ static int ft5x0x_process_points(struct ft5x0x_data *data)
 				input_mt_slot(data->input_dev, id);
 				input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, true);
 				input_report_abs(data->input_dev, ABS_MT_TOUCH_MAJOR, 200);
+
+#if defined(CONFIG_MACH_RK3188_A1013)
+				input_report_abs(data->input_dev, ABS_MT_POSITION_X, SCREEN_MAX_X - x);
+				input_report_abs(data->input_dev, ABS_MT_POSITION_Y, SCREEN_MAX_Y - y);
+#else
 				input_report_abs(data->input_dev, ABS_MT_POSITION_X, x);
 				input_report_abs(data->input_dev, ABS_MT_POSITION_Y, y);
+#endif
 			}
 		} else {
 		}
