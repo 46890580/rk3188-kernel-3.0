@@ -69,6 +69,7 @@ obj-$(CONFIG_LCD_LD089WU1_MIPI)   += lcd_LD089WU1_mipi.o
 obj-$(CONFIG_LCD_B080XAN02_MIPI)   += lcd_B080XAN02_mipi.o
 obj-$(CONFIG_LCD_NJ101IA)   += lcd_NJ101IA.o
 obj-$(CONFIG_LCD_TN94_800X480)	+= lcd_tn94_800x480.o
+obj-$(CONFIG_LCD_BP101WX1)	+= lcd_bp101wx1-206.o
 
 quiet_cmd_gen = GEN     $@
       cmd_gen = cmp -s $< $@ || cp $< $@
