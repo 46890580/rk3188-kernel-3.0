@@ -141,7 +141,7 @@ static struct ts_hw_data ft5526_info = {
 #ifdef CONFIG_BACKLIGHT_RK29_BL
 #define PWM_ID            3
 #define PWM_MODE          PWM3
-#define PWM_EFFECT_VALUE  0
+#define PWM_EFFECT_VALUE  1
 
 #define LCD_DISP_ON_PIN
 
