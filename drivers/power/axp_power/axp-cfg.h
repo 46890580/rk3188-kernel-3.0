@@ -7,6 +7,8 @@
 #include "m7r-cfg.h"
 #elif defined(CONFIG_MACH_RK3188_A1013)
 #include "a1013-cfg.h"
+#elif defined(CONFIG_MACH_RK3188_Q3188M)
+#include "q3188m-cfg.h"
 #else
 #error "Un-configured machine type."
 #endif

@@ -491,7 +491,7 @@ int rk29sdk_wifi_power(int on)
 }
 #else //---- #if (defined(CONFIG_RTL8192CU) || defined(CONFIG_RTL8188EU)....defined(CONFIG_MACH_RK3026_86V).
 
-#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
+#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013) || defined(CONFIG_MACH_RK3188_Q3188M)
 int wifi_bt_power_state = 0;
 int wifi_bt_run_num = 0;
 #endif
@@ -534,7 +534,7 @@ int rk29sdk_wifi_power(int on)
 				if(wifi_pwr!=-1)
 					port_output_on(wifi_pwr);
 			#else
-				#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
+				#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013) || defined(CONFIG_MACH_RK3188_Q3188M)
 				if(wifi_bt_power_state == 0){
 					wifi_bt_power_state  = 1;
 					pmu_wifi_bt_power(1);
@@ -565,7 +565,7 @@ int rk29sdk_wifi_power(int on)
 							port_output_off(wifi_pwr);
 				#else
 						gpio_set_value(rk_platform_wifi_gpio.power_n.io, !(rk_platform_wifi_gpio.power_n.enable));
-					#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013)
+					#if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013) || defined(CONFIG_MACH_RK3188_Q3188M)
 						if(wifi_bt_run_num == 1){
 							if(wifi_bt_power_state == 1)
 							{

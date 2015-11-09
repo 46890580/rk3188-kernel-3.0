@@ -35,6 +35,9 @@ config MACH_RK3188_DS1006H
 config MACH_RK3188_Q72
 	bool "RK3188 Q72 board"
 
+config MACH_RK3188_Q3188M
+	bool "RK3188 Q3188M board"
+
 config MACH_RK3188_M7R
 	bool "RK3188 M7R board"
 
