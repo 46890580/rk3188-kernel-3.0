@@ -496,6 +496,34 @@ int wifi_bt_power_state = 0;
 int wifi_bt_run_num = 0;
 #endif
 
+#if defined(CONFIG_MACH_RK3188_Q72)
+
+static void pmu_wifi_bt_power(int on)
+{
+	struct regulator *ldo1 = NULL;
+	struct regulator *ldo2 = NULL;
+
+	ldo1 = regulator_get(NULL, "DC1SW1");
+	ldo2 = regulator_get(NULL, "axp22_dldo1"); // AP6383
+
+	if(on) {
+		regulator_enable(ldo1);
+		regulator_enable(ldo2);
+		printk("%s: wifi power enable\n", __func__);
+	} else {
+		regulator_disable(ldo1);
+		regulator_disable(ldo2);
+		printk("%s: wifi power disable\n", __func__);
+	}
+	regulator_put(ldo1);
+	regulator_put(ldo2);
+
+	udelay(100);
+}
+
+#endif
+
+#if defined(CONFIG_MACH_RK3188_M7R) || defined(CONFIG_MACH_RK3188_A1013) || defined(CONFIG_MACH_RK3188_Q3188M)
 static void pmu_wifi_bt_power(int on)
 {
 	struct regulator *ldo = NULL;
@@ -525,6 +553,7 @@ static void pmu_wifi_bt_power(int on)
 
 	udelay(100);
 }
+#endif
 
 int rk29sdk_wifi_power(int on)
 {
