@@ -1256,6 +1256,15 @@ static struct i2c_board_info __initdata i2c3_info[] = {
 
 #ifdef CONFIG_I2C4_RK30
 static struct i2c_board_info __initdata i2c4_info[] = {
+#if defined (CONFIG_SND_SOC_RT5616)
+	{
+		.type                   = "rt5616",
+		.addr                   = 0x1B,
+		.flags                  = 0,
+
+	},
+#endif
+
 #if defined (CONFIG_MFD_RK616)
 	{
 		.type		= "rk616",
@@ -1389,6 +1398,10 @@ static void __init machine_rk30_board_init(void)
 	rk29sdk_wifi_combo_module_gpio_init();
 #endif
 
+	/* Enable SPK_CON */
+	gpio_request(RK30_PIN2_PD7, NULL);
+	gpio_direction_output(RK30_PIN2_PD7, 1);
+	gpio_set_value(RK30_PIN2_PD7, GPIO_HIGH);
 }
 #define HD_SCREEN_SIZE 1920UL*1200UL*4*3
 static void __init rk30_reserve(void)
