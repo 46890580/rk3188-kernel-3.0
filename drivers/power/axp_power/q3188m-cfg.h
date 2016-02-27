@@ -24,12 +24,12 @@
 	ldo2£º
 		AXP22:700~3300,100/step
 */
-#define AXP_LDO2_VALUE		0
+#define AXP_LDO2_VALUE		1800
 /*
 	ldo3£º
 		AXP22:700~3300,100/step
 */
-#define AXP_LDO3_VALUE		0
+#define AXP_LDO3_VALUE		2800
 /*
 	ldo4£º
 		AXP22:700~3300,100/step
@@ -54,7 +54,7 @@
 	ldo8£º
 		AXP22:700~3300,100/step
 */
-#define AXP_LDO8_VALUE		3300
+#define AXP_LDO8_VALUE		1800
 /*
 	ldo9£º
 		AXP22:700~3300,100/step
@@ -98,7 +98,7 @@
 	DCDC4£º
 		AXP22:600~1540£¬20/step
 */
-#define AXP_DCDC4_VALUE		0
+#define AXP_DCDC4_VALUE		1200
 /*
 	DCDC5£º
 		AXP22:1000~2550£¬50/step
