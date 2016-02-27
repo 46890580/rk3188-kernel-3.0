@@ -44,8 +44,8 @@
 #elif	defined(CONFIG_MACH_RK3188_A1013)
 #define CAMERA_POWERDN_FRONT    RK30_PIN3_PB4
 #elif	defined(CONFIG_MACH_RK3188_Q3188M)
-#define CAMERA_POWERDN_BACK	RK30_PIN3_PD3
-#define CAMERA_POWERDN_FRONT	RK30_PIN3_PD4
+#define CAMERA_POWERDN_BACK	RK30_PIN3_PD4
+#define CAMERA_POWERDN_FRONT	RK30_PIN3_PD3
 #else
 #error "Please check the SCH of your board, add correct definition"
 #endif
