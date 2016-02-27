@@ -985,7 +985,7 @@ static struct rk616_platform_data rk616_pdata = {
 	.lcd1_func	= INPUT,        //port lcd1 as input
 	.lvds_ch_nr	= 1,            //the number of used lvds channel
 	.hdmi_irq	= INVALID_GPIO,
-	.spk_ctl_gpio	= RK30_PIN2_PD7,
+	.spk_ctl_gpio	= RK30_PIN3_PD4,
 };
 #endif
 
@@ -1267,6 +1267,10 @@ static void __init machine_rk30_board_init(void)
 	/* enable PA TDA7491LP
 	 * FIXME: this should put to the right place of codec driver
 	 */
+
+	gpio_request(RK30_PIN2_PD7, "PA power");
+	gpio_direction_output(RK30_PIN2_PD7, GPIO_HIGH);
+
 	gpio_request(RK30_PIN3_PD3, "stdy");
 	gpio_direction_output(RK30_PIN3_PD3, GPIO_HIGH);
 
