@@ -582,7 +582,7 @@ static void report_key(struct gsl_ts *ts, u16 x, u16 y)
 
 static void report_data(struct gsl_ts *ts, u16 x, u16 y, u8 pressure, u8 id)
 {
-#ifndef CONFIG_MACH_RK3188_Q72
+#if !(defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_Q3188M))
 	swap(x, y);
 
 #endif
@@ -652,7 +652,7 @@ static void gslX680_ts_worker(struct work_struct *work)
 	{
 		cinfo.x[i] = join_bytes( ( ts->touch_data[ts->dd->x_index  + 4 * i + 1] & 0xf),
 				ts->touch_data[ts->dd->x_index + 4 * i]);
-#if defined (CONFIG_MACH_RK3188_Q72)
+#if defined (CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_Q3188M)
 		cinfo.y[i] = join_bytes((ts->touch_data[ts->dd->y_index + 4 * i + 1] & 0xf),
 				ts->touch_data[ts->dd->y_index + 4 * i ]);
 #else
