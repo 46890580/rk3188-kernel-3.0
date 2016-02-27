@@ -119,7 +119,11 @@ static struct ts_hw_data gsl3670_info = {
 #ifdef CONFIG_BACKLIGHT_RK29_BL
 #define PWM_ID            3
 #define PWM_MODE          PWM3
+#if defined(CONFIG_MACH_RK3188_Q3188M)
+#define PWM_EFFECT_VALUE  0
+#else
 #define PWM_EFFECT_VALUE  1
+#endif
 
 #define LCD_DISP_ON_PIN
 
@@ -234,7 +238,11 @@ static struct sensor_platform_data mma8452_info = {
 	.irq_enable = 1,
 	.poll_delay_ms = 30,
 	.init_platform_hw = mma8452_init_platform_hw,
+#if 1	/* ro.rk.hwrotation=270 */
+	.orientation = {0, 1, 0, 1, 0, 0, 0, 0, -1},
+#else
 	.orientation = {1, 0, 0, 0, -1, 0, 0, 0, -1},
+#endif
 };
 #endif
 
@@ -332,6 +340,7 @@ static int rk_fb_io_enable(void)
 	return 0;
 }
 
+#if defined(CONFIG_MACH_RK3188_Q72)
 #if defined(CONFIG_LCDC0_RK3066B) || defined(CONFIG_LCDC0_RK3188)
 struct rk29fb_info lcdc0_screen_info = {
 #if defined(CONFIG_RK_HDMI)
@@ -350,6 +359,30 @@ struct rk29fb_info lcdc1_screen_info = {
 	.io_enable	= rk_fb_io_enable,
 	.set_screen_info = set_lcd_info,
 };
+#endif
+#elif defined(CONFIG_MACH_RK3188_Q3188M)
+#if defined(CONFIG_LCDC0_RK3066B) || defined(CONFIG_LCDC0_RK3188)
+struct rk29fb_info lcdc0_screen_info = {
+	.prop		= PRMRY,                //primary display device
+	.io_init	= rk_fb_io_init,
+	.io_disable	= rk_fb_io_disable,
+	.io_enable	= rk_fb_io_enable,
+	.set_screen_info = set_lcd_info,
+
+};
+#endif
+
+#if defined(CONFIG_LCDC1_RK3066B) || defined(CONFIG_LCDC1_RK3188)
+struct rk29fb_info lcdc1_screen_info = {
+#if defined(CONFIG_RK_HDMI)
+	.prop		= EXTEND,       //extend display device
+	.lcd_info	= NULL,
+	.set_screen_info = hdmi_init_lcdc,
+#endif
+
+};
+#endif
+
 #endif
 
 static struct resource resource_fb[] = {
@@ -449,6 +482,129 @@ static struct platform_device device_lcdc1 = {
 	.resource	  = resource_lcdc1,
 	.dev 		= {
 		.platform_data = &lcdc1_screen_info,
+	},
+};
+#endif
+
+#if defined(CONFIG_SSD2828_RGB2MIPI)
+
+#include "../../../drivers/video/rockchip/transmitter/mipi_dsi.h"
+
+int ssd2828_vddio_enable(void *data)
+{
+}
+
+static int ssd2828_reset(void *data)
+{
+	int ret = 0;
+
+	gpio_set_value(RK30_PIN0_PB1, GPIO_LOW);
+	msleep(10);
+
+	gpio_set_value(RK30_PIN0_PB1, GPIO_HIGH);
+	msleep(10);
+
+	return ret;
+}
+
+static int ssd2828_power_up(void)
+{
+	struct regulator *ldo_12;
+	printk("%s\n", __FUNCTION__);
+
+	ldo_12 = regulator_get(NULL, "axp22_dldo3");    // vcc18_cif
+	if (ldo_12 == NULL || IS_ERR(ldo_12)) {
+		printk("get mipi vdd ldo failed!\n");
+		return -1;
+	}
+
+	if (ldo_12 == NULL || IS_ERR(ldo_12)) {
+		printk("get mipi vdd ldo failed!\n");
+		return -1;
+	}
+
+
+	regulator_set_voltage(ldo_12, 1200000, 1200000);
+	regulator_enable(ldo_12);
+
+	regulator_put(ldo_12);
+
+	ssd2828_reset(NULL);
+
+	return 0;
+
+}
+
+static int ssd2828_power_down(void)
+{
+	struct regulator *ldo_12;
+	printk("%s\n", __FUNCTION__);
+
+	ldo_12 = regulator_get(NULL, "axp22_dldo3");    // vcc18_cif
+	if (ldo_12 == NULL || IS_ERR(ldo_12)) {
+		printk("get mipi vdd ldo failed!\n");
+		return -1;
+	}
+
+	regulator_enable(ldo_12);
+	regulator_put(ldo_12);
+
+	return 0;
+}
+
+
+int ssd2828_mvdd_enable(void *data)
+{
+	struct regulator *ldo_12;
+	ldo_12 = regulator_get(NULL, "axp22_dldo3");    // vcc18_cif
+	if (ldo_12 == NULL || IS_ERR(ldo_12)) {
+		printk("get mipi vdd ldo failed!\n");
+		return -1;
+	}
+
+	printk("%s power on\n", __FUNCTION__);
+	regulator_set_voltage(ldo_12, 1200000, 1200000);
+	regulator_enable(ldo_12);
+
+	regulator_put(ldo_12);
+
+	return 0;
+}
+
+static struct ssd2828_t ssd2828_platform_data = {
+	.reset		= {
+		.reset_pin = RK30_PIN0_PB1,
+		.effect_value = GPIO_LOW,
+		.time_before_reset	= 10,
+		.time_after_reset	= 10,
+		.do_reset	= ssd2828_reset,
+	},
+	.shut		= {
+		.enable_pin = RK30_PIN3_PB2,
+	},
+	.vddio		= {
+		.enable_pin = INVALID_GPIO,
+		.enable = ssd2828_vddio_enable,
+	},
+	.vdd_mipi	= {
+		.enable_pin = INVALID_GPIO,
+		.enable = ssd2828_mvdd_enable,
+	},
+	.power_up	= ssd2828_power_up,
+	.power_down	= ssd2828_power_down,
+	.spi		= {
+		.cs	= RK30_PIN0_PD7,
+		.sck	= RK30_PIN0_PD6,
+		.miso	= RK30_PIN0_PD4,
+		.mosi	= RK30_PIN0_PD5,
+	},
+};
+
+static struct platform_device ssd2828_mipi_device = {
+	.name = "ssd2828",
+	.id = -1,
+	.dev = {
+		.platform_data = &ssd2828_platform_data,
 	},
 };
 #endif
@@ -893,6 +1049,9 @@ static struct platform_device *devices[] __initdata = {
 #endif
 #if defined(CONFIG_ARCH_RK3188)
 	&device_mali,
+#endif
+#if defined(CONFIG_SSD2828_RGB2MIPI)
+	&ssd2828_mipi_device,
 #endif
 };
 
