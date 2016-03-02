@@ -247,7 +247,7 @@ static struct sensor_platform_data mma8452_info = {
 #endif
 
 #ifdef CONFIG_RK_HDMI
-#define RK_HDMI_RST_PIN 			RK30_PIN3_PB2
+#define RK_HDMI_RST_PIN 			RK30_PIN1_PA7
 static int rk_hdmi_power_init(void)
 {
 	int ret;
@@ -258,12 +258,14 @@ static int rk_hdmi_power_init(void)
 			printk("func %s, line %d: request gpio fail\n", __FUNCTION__, __LINE__);
 			return -1;
 		}
-		gpio_direction_output(RK_HDMI_RST_PIN, GPIO_LOW);
-		gpio_set_value(RK_HDMI_RST_PIN, GPIO_LOW);
-		msleep(100);
-		gpio_set_value(RK_HDMI_RST_PIN, GPIO_HIGH);
+		gpio_direction_output(RK_HDMI_RST_PIN, GPIO_HIGH);
 		msleep(50);
+		gpio_set_value(RK_HDMI_RST_PIN, GPIO_LOW);
+		msleep(50);
+		gpio_set_value(RK_HDMI_RST_PIN, GPIO_HIGH);
+		msleep(200);
 	}
+	printk("wangluheng: hdmi sysreset!\n");
 	return 0;
 }
 static struct rk_hdmi_platform_data rk_hdmi_pdata = {
@@ -1154,6 +1156,16 @@ static struct i2c_board_info __initdata i2c0_info[] = {
 		.irq		= TOUCH_INT_PIN,
 		.platform_data	= &gsl3670_info,
 	},
+#endif
+#if defined (CONFIG_MHL_IT6811)
+	{
+		.type			= "it6811_mhl",
+		.addr			= 0x4c,
+		.flags			= 0,
+		.irq			= RK30_PIN1_PB3,
+		.platform_data  = &rk_hdmi_pdata,
+	},
+
 #endif
 #if defined (CONFIG_GS_MMA8452)
 	{

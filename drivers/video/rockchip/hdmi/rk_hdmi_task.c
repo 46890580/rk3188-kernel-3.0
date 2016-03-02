@@ -140,7 +140,8 @@ static int hdmi_process_command(void)
 	
 	change = hdmi->command;
 	if(change != HDMI_CONFIG_NONE)	
-	{		
+	{
+		printk("%s: change = %d\n", __FUNCTION__, change);
 		hdmi->command = HDMI_CONFIG_NONE;
 		switch(change)
 		{	

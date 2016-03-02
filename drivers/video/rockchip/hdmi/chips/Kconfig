@@ -27,6 +27,15 @@ if HDMI_CAT66121
 source "drivers/video/rockchip/hdmi/chips/cat66121/Kconfig"
 endif
 
+config  MHL_IT6811
+        bool "IT6811 MHL support"
+        help
+           Support it6811 mhl if you say y here
+
+if MHL_IT6811
+source "drivers/video/rockchip/hdmi/chips/it6811/Kconfig"
+endif
+
 config  HDMI_RK610
         bool "RK610 HDMI support"
         depends on MFD_RK610

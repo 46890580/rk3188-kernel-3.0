@@ -314,6 +314,7 @@ struct hdmi {
 #define hdmi_err(dev, format, arg...)		\
 	dev_printk(KERN_ERR , dev , format , ## arg)
 
+#define HDMI_DEBUG
 #ifdef HDMI_DEBUG
 #define hdmi_dbg(dev, format, arg...)		\
 	dev_printk(KERN_INFO , dev , format , ## arg)
