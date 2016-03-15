@@ -247,7 +247,7 @@ static struct sensor_platform_data mma8452_info = {
 #endif
 
 #ifdef CONFIG_RK_HDMI
-#define RK_HDMI_RST_PIN 			RK30_PIN1_PA7
+#define RK_HDMI_RST_PIN 			RK30_PIN0_PA7
 static int rk_hdmi_power_init(void)
 {
 	int ret;
@@ -264,8 +264,8 @@ static int rk_hdmi_power_init(void)
 		msleep(50);
 		gpio_set_value(RK_HDMI_RST_PIN, GPIO_HIGH);
 		msleep(200);
+		printk("wangluheng: hdmi sysreset!\n");
 	}
-	printk("wangluheng: hdmi sysreset!\n");
 	return 0;
 }
 static struct rk_hdmi_platform_data rk_hdmi_pdata = {
@@ -1162,7 +1162,7 @@ static struct i2c_board_info __initdata i2c0_info[] = {
 		.type			= "it6811_mhl",
 		.addr			= 0x4c,
 		.flags			= 0,
-		.irq			= RK30_PIN1_PB3,
+		.irq			= RK30_PIN1_PA7,
 		.platform_data  = &rk_hdmi_pdata,
 	},
 

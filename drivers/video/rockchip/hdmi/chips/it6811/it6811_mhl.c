@@ -84,9 +84,11 @@ static void it6811_irq_work_func(struct work_struct *work)
 
 static irqreturn_t it6811_thread_interrupt(int irq, void *dev_id)
 {
+    //disable_irq(irq);
 	it6811_irq_work_func(NULL);
-	msleep(HDMI_POLL_MDELAY);
-	hdmi_dbg(hdmi->dev, "%s irq=%d\n", __func__,irq);
+	//msleep(HDMI_POLL_MDELAY);
+	//hdmi_dbg(hdmi->dev, "%s irq=%d\n", __func__,irq);
+    //enable_irq(irq);
 	return IRQ_HANDLED;
 }
 
@@ -191,13 +193,11 @@ static int it6811_mhl_i2c_probe(struct i2c_client *client,const struct i2c_devic
 		}
 	}
 
-	goto err_request_lcdc;
 	if (it6811_detect_device()!=1) {
-		dev_err(hdmi->dev, "can't find it66121 device \n");
+		dev_err(hdmi->dev, "can't find it6811 device \n");
 		rc = -ENXIO;
 		goto err_request_lcdc;
 	}
-	goto err_request_lcdc;
 
 	if (client->irq == 0) {
 		dev_err(hdmi->dev, "can't find it66121 irq\n");
@@ -249,7 +249,7 @@ static int it6811_mhl_i2c_probe(struct i2c_client *client,const struct i2c_devic
 
 #if defined(CONFIG_DEBUG_FS)
 	{
-		struct dentry *debugfs_dir = debugfs_create_dir("it66121", NULL);
+		struct dentry *debugfs_dir = debugfs_create_dir("it6811", NULL);
 		if (IS_ERR(debugfs_dir)) {
 			dev_err(&client->dev,"failed to create debugfs dir for it66121!\n");
 		} else {
@@ -259,7 +259,7 @@ static int it6811_mhl_i2c_probe(struct i2c_client *client,const struct i2c_devic
 #endif
 
 	if (hdmi->irq != INVALID_GPIO) {
-		it6811_irq_work_func(NULL);
+		//it6811_irq_work_func(NULL);
 		if ((rc = gpio_request(client->irq, "hdmi gpio")) < 0) {
 			dev_err(&client->dev, "fail to request gpio %d\n", client->irq);
 			goto err_request_lcdc;

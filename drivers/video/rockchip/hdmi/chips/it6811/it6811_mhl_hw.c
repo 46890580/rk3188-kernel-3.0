@@ -64,9 +64,9 @@ void i2cwr(__u16 i2caddr, BYTE regaddr, BYTE data)
 	if(ret != 1)
 		printk("I2C transfer Error i2caddr:0x%02x, regaddr:0x%02x, data:0x%02x!\n", i2caddr, regaddr, data);
 
-	drd = i2crd(i2caddr, regaddr);
+	/*drd = i2crd(i2caddr, regaddr);
 	if (data != drd)
-		printk("I2C wr Error i2caddr:0x%02x, regaddr:0x%02x, data-wr:0x%02x, data-rd:0x%02x!\n", i2caddr, regaddr, data, drd);
+		printk("I2C wr Error i2caddr:0x%02x, regaddr:0x%02x, data-wr:0x%02x, data-rd:0x%02x!\n", i2caddr, regaddr, data, drd);*/
 
 }
 
@@ -89,36 +89,24 @@ void mhltxwr(BYTE regaddr, BYTE data)
 	i2cwr(MHL_ADDR, regaddr, data);
 }
 
-void hdmitxset(BYTE Reg,BYTE Mask,BYTE Value)
+void hdmitxset( unsigned char offset, unsigned char mask, unsigned char wdata )
 {
-	BYTE Temp;
-	if( Mask != 0xFF )
-	{
-		Temp=hdmitxrd(Reg);
-		Temp&=(~Mask);
-		Temp|=Value&Mask;
-	}
-	else
-	{
-		Temp=Value;
-	}
-	hdmitxwr(Reg,Temp);
+     unsigned char temp;
+
+     temp = hdmitxrd(offset);
+     temp = (temp&((~mask)&0xFF))+(mask&wdata);
+     hdmitxwr(offset, temp);
+     return ;
 }
 
-void mhltxset(BYTE Reg,BYTE Mask,BYTE Value)
+void mhltxset( unsigned char offset, unsigned char mask, unsigned char wdata )
 {
-	BYTE Temp;
-	if( Mask != 0xFF )
-	{
-		Temp=mhltxrd(Reg);
-		Temp&=(~Mask);
-		Temp|=Value&Mask;
-	}
-	else
-	{
-		Temp=Value;
-	}
-	mhltxwr(Reg,Temp);
+ unsigned char temp;
+
+     temp = mhltxrd(offset);
+     temp = (temp&((~mask)&0xFF))+(mask&wdata);
+     mhltxwr(offset, temp);
+     return; 
 }
 
 long int get_current_time_us(void)

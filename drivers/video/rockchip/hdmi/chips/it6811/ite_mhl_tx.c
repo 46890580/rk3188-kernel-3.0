@@ -6,6 +6,7 @@
 #include "ite_mhl_tx_base_drv_api.h"  
 #include "ite_drv_mhl_tx.h"  
 
+#define ENABLE_TX_DEBUG_PRINT 1
 
 #define NUM_CBUS_EVENT_QUEUE_EVENTS 5
 typedef struct _CBusQueue_t

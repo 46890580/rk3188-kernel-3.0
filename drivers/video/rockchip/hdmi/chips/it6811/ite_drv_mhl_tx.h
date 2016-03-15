@@ -243,7 +243,7 @@
 
 #define _EnCBusU3IDDQ     FALSE
 
-#define _EnVBUSOut        FALSE	   //Some dongle need to force this
+#define _EnVBUSOut        TRUE	   //Some dongle need to force this
 
 #define _AutoSwBack       TRUE
 

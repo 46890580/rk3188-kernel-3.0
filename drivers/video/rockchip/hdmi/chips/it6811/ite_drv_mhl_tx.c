@@ -794,27 +794,27 @@ static unsigned char const bCSCMtx_YUV2RGB_ITU709_0_255[SIZEOF_CSCMTX] =
 
 static  struct IT6811_REG_INI const tIt6811init_hdmi[] = {
 
-    {0x0F, 0x40, 0x00},   // Enable GRCLK
+    {0x0F, 0x40, 0x00},   // Enable GRCLK, power on RCLK
     // add for HDCP issue
-    {0x04, 0x1D, 0x1D},   // ACLK/VCLK/HDCP Reset
+    {0x04, 0x1D, 0x1D},   // ACLK/AFIFO/VCLK/HDCP Reset
     // PLL Reset
-    {0x62, 0x08, 0x00},   // XP_RESETB
-    {0x64, 0x04, 0x00},   // IP_RESETB 
-    {0x04, 0x20, 0x20},   // RCLK Reset
-    {0x04, 0x1D, 0x1D},   // ACLK/VCLK/HDCP Reset
+    {0x62, 0x08, 0x00},   // XP_RESETB, MHLTXPLL reset
+    {0x64, 0x04, 0x00},   // IP_RESETB, MHLIPLL reset
+    {0x04, 0x20, 0x20},   // RCLK Reset, sw RCLK reset
+    {0x04, 0x1D, 0x1D},   // ACLK/AFIFO/VCLK/HDCP Reset
     // MHL Slave Address
     {0x8D, 0xFF, IT6811_MHL_ADDR|0x01}, //CBUS Slave address enable
-    {0x62, 0x90, 0x10},
-    {0x64, 0x89, 0x09},
-    {0x68, 0x10, 0x10},    // EnExtRST =0
-    {0xE8, 0x02, 0x02},    //EnCBusSMT ==1
+    {0x62, 0x90, 0x10},   // video freq band sel: TDMS clk < 100M, increased MHLTXPLL011A0 filter resistance (<100 MHz)
+    {0x64, 0x89, 0x09},   // video freq band sel: IP clk < 100M, increased MHLIPLL011A0 filter resistance(<100M), when IP_HCLK < 100M
+    {0x68, 0x10, 0x10},   // XP_EC1: when TDMS clk < 100M
+    {0xE8, 0x02, 0x02},   // CBUS Schmitt trigger option
     // Initial Value]
-    {0xF8, 0xFF, 0xC3},
+    {0xF8, 0xFF, 0xC3},   // support HDCP
     {0xF8, 0xFF, 0xA5},
-    {0x5D, 0x08, 0x00},     //  EnExtOSC = FALSE;
-    {0x05, 0x1E, 0x00},     //ForceRxOn =FALSE; RCLKPDSel =0;  PwrDnRCLK = FALSE;
-    {0xF4, 0x0C, 0x00},  //DDC75K(0),DDC125K(1),DDC312K(2)
-    {0xF3, 0x32, 0x30},  //ForceVOut = 0; CBUSDrv =1
+    {0x5D, 0x08, 0x00},   //  EnExtOSC = FALSE; reserved ?
+    {0x05, 0x1E, 0x00},   // ForceRxOn =FALSE; RCLKPDSel =0;  PwrDnRCLK = FALSE;
+    {0xF4, 0x0C, 0x00},   // DDC75K(0),DDC125K(1),DDC312K(2)
+    {0xF3, 0x32, 0x30},   // ForceVOut = 0; CBUSDrv =1
     {0xF8, 0xFF, 0xFF},
     {0x5A, 0x0C, 0x0C},
     {0xD1, 0x0A, 0x02},     // ForceTxCLKStb =0; High Sensitivity
@@ -1043,13 +1043,13 @@ static void cal_oclk( struct it6811_dev_data *it6811 )
             mdelay(20);//100
       
             sys_time2 = get_current_time_us();      
-			IT6811_DEBUG_PRINTF("cal_clock ,sys_time = %d us\n", (int)(sys_time2 - sys_time1));
 			delay_count += (unsigned long)((sys_time2 - sys_time1)/1000);
        
             mhltxwr(0x01, 0x40); 
             rddata = (unsigned long)mhltxrd(0x12);
             rddata += (unsigned long)mhltxrd(0x13)<<8;
             rddata += (unsigned long)mhltxrd(0x14)<<16;
+			IT6811_DEBUG_PRINTF("cal_clock ,sys_time = %d us\n", (int)(sys_time2 - sys_time1));
 
             sum += rddata;
 
@@ -1116,15 +1116,15 @@ static void Mhl_state(struct it6811_dev_data *it6811 , MHLState_Type state)
 	             HDMITX_MHL_DEBUG_PRINTF("IT6811dev[DevNum].Mhl_state => MHL_USB_PWRDN \n");
 	        case MHL_USB:
 	            HDMITX_MHL_DEBUG_PRINTF("it6811->Mhl_state => MHL_USB \n");
-				mhltxset(0x0A, 0x02, 0x02);
+				mhltxset(0x0A, 0x02, 0x02);    // disable CBus 1k detect fail INT
 	            mhltxset(0x0F, 0x01, 0x01);    //Switch to USB, keep Cbusmhltxset(0x0A, 0x02, 0x02);
 	            break;
 
 	        case MHL_Cbusdet:
 	            mhltxwr(0x08, 0xFF);   
 	            mhltxwr(0x09, 0xFF);   
-	            mhltxset(0x0F, 0x11, 0x11);    //  reset Cbus fsm
-	            mhltxset(0x0F, 0x11, 0x00);    //   
+	            mhltxset(0x0F, 0x11, 0x11);    // reset discovery & disconnect fsm
+	            mhltxset(0x0F, 0x11, 0x00);    // switch to mhl mode
 	            it6811->CBusDetCnt = 0;
 	            it6811->Det1KFailCnt = 0;
 	            it6811->DisvFailCnt = 0;    
@@ -1176,10 +1176,10 @@ static void set_aud_fmt( struct it6811_dev_data *it6811 )
     hdmitxset(0xE1, 0x1F, 0x01); // Config I2C Mode
 
 #if(_AUDIO_I2S)
-        hdmitxwr(0xE2, 0xE4);
+    hdmitxwr(0xE2, 0xE4);
 #else
-        hdmitxwr(0xE2, 0x00);
-        hdmitxset(0x58, 0x80, 0x00);
+    hdmitxwr(0xE2, 0x00);
+    hdmitxset(0x58, 0x80, 0x00);
 #endif
 
     hdmitxset(0xE3, 0x10,0x10);      // user define channel status
@@ -1262,15 +1262,15 @@ static void set_aud_fmt( struct it6811_dev_data *it6811 )
     // Audio InfoFrame
     switch( it6811->AudCh ) 
     {
-    case 0 : infoca = 0xFF; break;  // no audio
-    case 2 : infoca = 0x00; break;
-    //case 3 : infoca = 0x01; break;  // 0x01,0x02,0x04
-    //case 4 : infoca = 0x03; break;  // 0x03,0x05,0x06,0x08,0x14
-    //case 5 : infoca = 0x07; break;  // 0x07,0x09,0x0A,0x0C,0x15,0x16,0x18
-    //case 6 : infoca = 0x0B; break;  // 0x0B,0x0D,0x0E,0x10,0x17,0x19,0x1A,0x1C
-    //case 7 : infoca = 0x0F; break;  // 0x0F,0x11,0x12,0x1B,0x1D,0x1E
-    //case 8 : infoca = 0x1F; break;  // 0x13,0x1F
-    default : HDMITX_DEBUG_PRINTF("IT6811-ERROR: Audio Channel Number Error !!!\n");
+        case 0 : infoca = 0xFF; break;  // no audio
+        case 2 : infoca = 0x00; break;
+        //case 3 : infoca = 0x01; break;  // 0x01,0x02,0x04
+        //case 4 : infoca = 0x03; break;  // 0x03,0x05,0x06,0x08,0x14
+        //case 5 : infoca = 0x07; break;  // 0x07,0x09,0x0A,0x0C,0x15,0x16,0x18
+        //case 6 : infoca = 0x0B; break;  // 0x0B,0x0D,0x0E,0x10,0x17,0x19,0x1A,0x1C
+        //case 7 : infoca = 0x0F; break;  // 0x0F,0x11,0x12,0x1B,0x1D,0x1E
+        //case 8 : infoca = 0x1F; break;  // 0x13,0x1F
+        default : HDMITX_DEBUG_PRINTF("IT6811-ERROR: Audio Channel Number Error !!!\n");
     }
 
     hdmitxwr(0x68, it6811->AudCh-1);
@@ -1294,9 +1294,8 @@ static void set_aud_fmt( struct it6811_dev_data *it6811 )
 
     switch( infoca ) 
     {
-    case 0x00 : audsrc = 0x01; break;
-
-    default   : audsrc = 0x00; break; // no audio
+        case 0x00 : audsrc = 0x01; break;
+        default   : audsrc = 0x00; break; // no audio
     }
 
     //NO HBR support
@@ -1309,8 +1308,8 @@ static void set_aud_fmt( struct it6811_dev_data *it6811 )
     hdmitxset(0xE0, 0x1F, 0x11);
     #endif
 
-	   hdmitxset(0xE0, 0xc0, SUPPORT_AUDI_AudSWL); //Tranmin for set the input I2S Sample length
-	   hdmitxset(0xE1, 0x07, I2S_FORMAT); // // Tranmin Config I2S Mode again as user define,the I2S format & Justified & delay settings
+    hdmitxset(0xE0, 0xc0, SUPPORT_AUDI_AudSWL); //Tranmin for set the input I2S Sample length
+    hdmitxset(0xE1, 0x07, I2S_FORMAT); // // Tranmin Config I2S Mode again as user define,the I2S format & Justified & delay settings
 }
 
 static void aud_chg( struct it6811_dev_data *it6811 , int audio_on )
@@ -1628,17 +1627,17 @@ static int Hdmi_Video_state(struct it6811_dev_data *it6811 , HDMI_Video_state st
 
         switch(state) {
 	        case HDMI_Video_REST:
-	            HDMITX_DEBUG_PRINTF("Hdmi_Video_state ==> HDMI_Video_REST");
-	            hdmitxset(0x04, 0x08, 0x08);  // Video Clock Domain Reset
-	            hdmitxset(0x0A, 0x40, 0x40);  // Enable Video UnStable Interrupt
-	            hdmitxset(0x0B, 0x08, 0x08);  // Enable Video Stable Interrupt
-	            hdmitxset(0xEC, 0x04, 0x04);  // Enable Video Input FIFO auto-reset Interrupt
-	            hdmitxset(0xEC, 0x84, 0x84);  // Enable Video In/Out FIFO Interrupt
+	            HDMITX_DEBUG_PRINTF("Hdmi_Video_state ==> HDMI_Video_REST\n");
+	            hdmitxset(0x04, 0x08, 0x08);  // sw Video Clock base signal Reset
+	            hdmitxset(0x0A, 0x40, 0x40);  // disable Video UnStable Interrupt
+	            hdmitxset(0x0B, 0x08, 0x08);  // disable Video Stable Interrupt
+	            hdmitxset(0xEC, 0x04, 0x04);  // Enable Video Input FIFO error Interrupt
+	            hdmitxset(0xEC, 0x84, 0x84);  // Enable V2H FIFO error Interrupt
 	            hdmitxset(0xC1, 0x01, 0x01);  // Set AVMute
 	            break;
 
 	        case HDMI_Video_WAIT:
-	            HDMITX_DEBUG_PRINTF("Hdmi_Video_state ==> HDMI_Video_WAIT");
+	            HDMITX_DEBUG_PRINTF("Hdmi_Video_state ==> HDMI_Video_WAIT\n");
 	            hdmitxset(0x04, 0x08, 0x08);  // Video Clock Domain Reset
 	            hdmitxset(0x0A, 0x40, 0x00);  // Enable Video UnStable Interrupt
 	            hdmitxset(0x0B, 0x08, 0x00);  // Enable Video Stable Interrupt
@@ -1649,7 +1648,7 @@ static int Hdmi_Video_state(struct it6811_dev_data *it6811 , HDMI_Video_state st
 	            break;
 
 	        case HDMI_Video_ON:
-	            HDMITX_DEBUG_PRINTF("Hdmi_Video_state ==> HDMI_Video_ON");
+	            HDMITX_DEBUG_PRINTF("Hdmi_Video_state ==> HDMI_Video_ON\n");
 	            set_vid_fmt(it6811);
 	            //setup_mhltxafe(it6811,cal_pclk());  // setup TX AFE here if PCLK is unknown 
 	            //setup_mhltxafe(74250L);         //720P 74.25M 
@@ -2214,7 +2213,7 @@ static void hdmitx_irq( struct it6811_dev_data *it6811 )
         
         rddata = hdmitxrd(0x0E);
         it6811->RxSen = ((unsigned int)rddata & 0x60) >> 5;
-        IT6811_DEBUG_INT_PRINTF("IT6811-HPD Change Interrupt HPD/RXsen(it6811->RxSen) ===> %d/%d(%d)!! ", (int)((rddata & 0x40) >>  6), (int)((rddata & 0x20) >> 5), it6811->RxSen);
+        IT6811_DEBUG_INT_PRINTF("IT6811-HPD Change Interrupt HPD/RXsen(it6811->RxSen) ===> %d/%d(%d)!! \n", (int)((rddata & 0x40) >>  6), (int)((rddata & 0x20) >> 5), it6811->RxSen);
 
         ITE6811MhlTxNotifyDsHpdChange(rddata & 0x40);
     }
@@ -2997,11 +2996,12 @@ int iteReadEdidBlock( unsigned char *buff ,int block)
     int i;
 	int offset = 0;
 
-	for(i=0;i<32;i++) {
+	/*for(i=0;i<32;i++) {
 		buff[offset+i] = hdmitxrd(0x17);
 		HDMITX_DEBUG_PRINTF("EDID[%2.2X] is [%2.2X]-------\n",i,hdmitxrd(0x17));
-	}	 
+	}*/	 
 
+    hdmitxset(0x10, 0x01, 0x01);
 	for(offset = 0; offset < 128; offset += _EDIDRdByte_) {
 		hdmitxwr(0x15, 0x09);                       // DDC FIFO Clear
 		hdmitxwr(0x11, 0xA0);                       // EDID Address
@@ -3027,7 +3027,7 @@ int iteReadEdidBlock( unsigned char *buff ,int block)
 
 		for(i=0;i<_EDIDRdByte_;i++) {
 			buff[offset+i] = hdmitxrd(0x17);
-			HDMITX_DEBUG_PRINTF("buff[%2.2X] is [%2.2X]-------\n",offset+i,buff[offset+i]);
+			//HDMITX_DEBUG_PRINTF("buff[%2.2X] is [%2.2X]-------\n",offset+i,buff[offset+i]);
 		}    
 	}
 
