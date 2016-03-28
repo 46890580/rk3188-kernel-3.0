@@ -2013,8 +2013,12 @@ static int rtnetlink_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 		while (RTA_OK(attr, attrlen)) {
 			unsigned int flavor = attr->rta_type & NLA_TYPE_MASK;
 			if (flavor) {
-				if (flavor > rta_max[sz_idx])
-					return -EINVAL;
+				if (flavor > rta_max[sz_idx]) {
+                    printk("rta_mac[%d]\n", sz_idx);
+                    //return -EINVAL;
+                    attr = RTA_NEXT(attr, attrlen);
+                    continue;
+                }
 				rta_buf[flavor-1] = attr;
 			}
 			attr = RTA_NEXT(attr, attrlen);

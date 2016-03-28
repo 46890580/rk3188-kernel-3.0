@@ -1148,15 +1148,6 @@ static int rk_platform_add_display_devices(void)
 // i2c
 #ifdef CONFIG_I2C0_RK30
 static struct i2c_board_info __initdata i2c0_info[] = {
-#if defined (CONFIG_TOUCHSCREEN_GSL3670) && defined(CONFIG_MACH_RK3188_Q3188M)
-	{
-		.type		= "gsl3670",
-		.addr		= 0x40,
-		.flags		= 0,
-		.irq		= TOUCH_INT_PIN,
-		.platform_data	= &gsl3670_info,
-	},
-#endif
 #if defined (CONFIG_MHL_IT6811)
 	{
 		.type			= "it6811_mhl",
@@ -1212,7 +1203,14 @@ static struct i2c_board_info __initdata i2c1_info[] = {
 		.irq		= RK30_PIN0_PB5,
 	},
 #endif
-
+#if defined (CONFIG_TMP_TC74) && defined(CONFIG_MACH_RK3188_Q3188M)
+	{
+		.type		= "tmp_tc74",
+		.addr		= 0x48,
+		.flags		= 0,
+		.platform_data	= &tc74_platdata,
+	},
+#endif
 };
 #endif
 
@@ -1268,6 +1266,16 @@ static struct i2c_board_info __initdata i2c3_info[] = {
 
 #ifdef CONFIG_I2C4_RK30
 static struct i2c_board_info __initdata i2c4_info[] = {
+#if defined (CONFIG_TOUCHSCREEN_GSL3670) && defined(CONFIG_MACH_RK3188_Q3188M)
+	{
+		.type		= "gsl3670",
+		.addr		= 0x40,
+		.flags		= 0,
+		.irq		= TOUCH_INT_PIN,
+		.platform_data	= &gsl3670_info,
+	},
+#endif
+
 #if defined (CONFIG_SND_SOC_RT5616)
 	{
 		.type                   = "rt5616",
@@ -1414,6 +1422,20 @@ static void __init machine_rk30_board_init(void)
 	gpio_request(RK30_PIN2_PD7, NULL);
 	gpio_direction_output(RK30_PIN2_PD7, 1);
 	gpio_set_value(RK30_PIN2_PD7, GPIO_HIGH);
+
+	/* */
+	gpio_request(RK30_PIN1_PB4, NULL);
+	gpio_direction_output(RK30_PIN1_PB4, 1);
+	gpio_set_value(RK30_PIN1_PB4, GPIO_LOW);
+	gpio_free(RK30_PIN1_PB4);
+
+
+	/* Pull up SYSRSTN of IT6801 */
+	gpio_request(RK30_PIN1_PA4, NULL);
+	gpio_direction_output(RK30_PIN1_PA4, 1);
+	//gpio_set_value(RK30_PIN1_PA4, GPIO_LOW);
+	gpio_set_value(RK30_PIN1_PA4, GPIO_HIGH);
+	gpio_free(RK30_PIN1_PA4);
 }
 #define HD_SCREEN_SIZE 1920UL*1200UL*4*3
 static void __init rk30_reserve(void)
