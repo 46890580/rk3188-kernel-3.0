@@ -208,11 +208,7 @@ static int it6811_mhl_i2c_probe(struct i2c_client *client,const struct i2c_devic
 
 	it6811_mhl->plug_status = -1;
 
-#ifdef SUPPORT_HDCP
-	hdmi->irq = INVALID_GPIO;
-#else
 	hdmi->irq = gpio_to_irq(client->irq);
-#endif
 
 	hdmi->xscale = 100;
 	hdmi->yscale = 100;

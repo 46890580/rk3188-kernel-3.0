@@ -147,27 +147,20 @@ int it6811_sys_detect_hpd(void)
 	BYTE sysstat;
 
 
-#ifdef SUPPORT_HDCP
-	if((it6811_mhl->plug_status != 0) && (it6811_mhl->plug_status != 1))
-		it6811_mhl->plug_status = hdmitxrd(REG_TX_SYS_STATUS);
-	
-        sysstat = it6811_mhl->plug_status;
-#else
-        sysstat = hdmitxrd(REG_TX_SYS_STATUS);
-#endif
+    sysstat = hdmitxrd(REG_TX_SYS_STATUS);
 
-	HPD = ((sysstat & B_TX_HPDETECT) == B_TX_HPDETECT)?TRUE:FALSE;
+	HPD = ((sysstat & B_TX_HPDETECT) == B_TX_HPDETECT) ? TRUE : FALSE;
 	if(HPD)
 		return HDMI_HPD_ACTIVED;
 	else
 		return HDMI_HPD_REMOVED;
 }
 
-extern int iteReadEdidBlock( unsigned char *buff ,int block);
+extern int iteReadEdidBlock( unsigned char *buff ,int block, int start);
 int it6811_sys_read_edid(int block, unsigned char *buff)
 {
 	hdmi_dbg(hdmi->dev, "[%s]\n", __FUNCTION__);
-	return ((iteReadEdidBlock(buff, block) == SUCCESS) ? HDMI_ERROR_SUCESS : HDMI_ERROR_FALSE);
+	return ((iteReadEdidBlock(buff, block / 2, (block % 2) * 128) == SUCCESS) ? HDMI_ERROR_SUCESS : HDMI_ERROR_FALSE);
 }
 
 int it6811_sys_config_video(struct hdmi_video_para *vpara)

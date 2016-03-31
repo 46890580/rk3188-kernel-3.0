@@ -688,6 +688,8 @@ void	ITE6811MhlTxNotifyDsHpdChange( uint8_t dsHpdStatus )
 
 		ITE6811MhlTxTmdsEnable();
 	}
+
+    queue_delayed_work(hdmi->workqueue, &hdmi->delay_work, msecs_to_jiffies(10));
 }
 
 static void	MhlTxResetStates( void )

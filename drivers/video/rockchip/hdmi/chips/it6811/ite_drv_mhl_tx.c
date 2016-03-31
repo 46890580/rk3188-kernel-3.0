@@ -7,7 +7,7 @@
 #endif
 
 #ifdef DEBUG
-#define TRACE_INT_TIME
+//#define TRACE_INT_TIME
 #endif
 
 #ifdef TRACE_INT_TIME
@@ -174,7 +174,7 @@ void ITE6811MhlTxDeviceIsr(void)
         }
 
         intMStatus= hdmitxrd(0xF0); 
-        if (0x00 == intMStatus) {
+        if (0/*00x00 == intMStatus*/) {
             TX_DEBUG_PRINT("Drv: EXITING ISR DUE TO intMStatus - 0x00 loop = [%02X] intMStatus = [%02X] \n\n", (int) i, (int)intMStatus);
         }
         i++;
@@ -2149,6 +2149,7 @@ static void hdmitx_irq( struct it6811_dev_data *it6811 )
     MHLA2 = 0x00;
     MHLA3 = 0x00;       
 
+    IT6811_DEBUG_INT_PRINTF("\n");
     RegF0 = hdmitxrd(0xF0);
     if (RegF0 & 0x10) {
         IT6811_DEBUG_INT_PRINTF("IT6811-Detect U3 Wakeup Interrupt ...\n");
@@ -2197,14 +2198,14 @@ static void hdmitx_irq( struct it6811_dev_data *it6811 )
         mhltxwr(0xA3, MHLA3);
     }
     
-	IT6811_DEBUG_INT_PRINTF("IT6811-hdmitx_irq debug:\n");
+    /*IT6811_DEBUG_INT_PRINTF("IT6811-hdmitx_irq debug:\n");
     IT6811_DEBUG_INT_PRINTF("reg06=%2.2X ,reg07=%2.2X ,reg08=%2.2X\n",(int)Reg06,(int)Reg07,(int)Reg08);
     IT6811_DEBUG_INT_PRINTF("regEE=%2.2X ,regEF=%2.2X, regF0 = %2.2X \n ",(int)RegEE,(int)RegEF,(int)RegF0);
     IT6811_DEBUG_INT_PRINTF("MHL04=%2.2X ,MHL05=%2.2X ,MHL06=%2.2X\n ",(int)MHL04,(int)MHL05,(int)MHL06);
     IT6811_DEBUG_INT_PRINTF("MHLA0=%2.2X ,MHLA1=%2.2X ,MHLA2=%2.2X ,MHLA3=%2.2X\n ",(int)MHLA0,(int)MHLA1,(int)MHLA2,(int)MHLA3);
     IT6811_DEBUG_INT_PRINTF("reg04=%2.2X ,reg05=%2.2X ,reg0B=%2.2X\n ",(int)hdmitxrd(0x04),(int)hdmitxrd(0x05),(int)hdmitxrd(0x0B));
     IT6811_DEBUG_INT_PRINTF("reg0E=%2.2X ,reg0F=%2.2X , \n ",(int)hdmitxrd(0x0E),(int)hdmitxrd(0x0F));
-    IT6811_DEBUG_INT_PRINTF("reg70=%2.2X ,reg71=%2.2X ,reg72=%2.2X\n ",(int)hdmitxrd(0x70),(int)hdmitxrd(0x70),(int)hdmitxrd(0x72));
+    IT6811_DEBUG_INT_PRINTF("reg70=%2.2X ,reg71=%2.2X ,reg72=%2.2X\n ",(int)hdmitxrd(0x70),(int)hdmitxrd(0x70),(int)hdmitxrd(0x72));*/
 
     if (Reg06 & 0x01) {
         IT6811_DEBUG_INT_PRINTF("IT6811-HPD Change Interrupt \n");
@@ -2991,7 +2992,7 @@ int iteDDccheck(void)
 }    
 
 
-int iteReadEdidBlock( unsigned char *buff ,int block)
+int iteReadEdidBlock( unsigned char *buff ,int block, int start)
 {
     int i;
 	int offset = 0;
@@ -3005,13 +3006,13 @@ int iteReadEdidBlock( unsigned char *buff ,int block)
 	for(offset = 0; offset < 128; offset += _EDIDRdByte_) {
 		hdmitxwr(0x15, 0x09);                       // DDC FIFO Clear
 		hdmitxwr(0x11, 0xA0);                       // EDID Address
-		hdmitxwr(0x12, offset);                     // EDID Offset
+		hdmitxwr(0x12, offset + start);                     // EDID Offset
 		hdmitxwr(0x13, _EDIDRdByte_);               // Read ByteNum 
 		hdmitxwr(0x14, (unsigned char)(block/2));    // EDID Segment
 
-		HDMITX_DEBUG_PRINTF("EDID read :offset = %d  !!!\n",offset);
-		HDMITX_DEBUG_PRINTF("reg0x11=%2.2X  reg0x12=%2.2X reg0x13=%2.2X ", hdmitxrd(0x11), hdmitxrd(0x12), hdmitxrd(0x13));
-		HDMITX_DEBUG_PRINTF("reg0x14=%2.2X  reg0x15=%2.2X reg0x16=%2.2X \n", hdmitxrd(0x14), hdmitxrd(0x15), hdmitxrd(0x16));
+		//HDMITX_DEBUG_PRINTF("EDID read :offset = %d  !!!\n",offset);
+		//HDMITX_DEBUG_PRINTF("reg0x11=%2.2X  reg0x12=%2.2X reg0x13=%2.2X ", hdmitxrd(0x11), hdmitxrd(0x12), hdmitxrd(0x13));
+		//HDMITX_DEBUG_PRINTF("reg0x14=%2.2X  reg0x15=%2.2X reg0x16=%2.2X \n", hdmitxrd(0x14), hdmitxrd(0x15), hdmitxrd(0x16));
 
 		if( _EDIDRdType_== _COMBRD ) {
 			hdmitxset(0x1B, 0x80, 0x80);

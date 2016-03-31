@@ -95,13 +95,13 @@ static void ParseStandardTiming(uint8_t *);
 
 extern int iteDDccheck(void);
 
-extern int iteReadEdidBlock( unsigned char *buff ,int block);
+extern int iteReadEdidBlock( unsigned char *buff ,int block, int start);
 
 uint8_t ParseEDID (uint8_t *pEdid, uint8_t *numExt)
 {
 	uint8_t i, j, k;
 
-	TX_EDID_PRINT("EDID DATA (Segment = 0 Block = 0 Offset = %d):\n", EDID_BLOCK_0_OFFSET);
+	/*TX_EDID_PRINT("EDID DATA (Segment = 0 Block = 0 Offset = %d):\n", EDID_BLOCK_0_OFFSET);
     for (j = 0, i = 0; j < 128; j++) {
         k = pEdid[j];
         TX_EDID_PRINT("%02X ", (int) k);
@@ -112,7 +112,7 @@ uint8_t ParseEDID (uint8_t *pEdid, uint8_t *numExt)
         }
     }
 
-	TX_EDID_PRINT("\n");
+	TX_EDID_PRINT("\n");*/
 	if (!CheckEDID_Header(pEdid)) {
 		TX_EDID_PRINT("EDID -> Incorrect Header\n");
 		return EDID_INCORRECT_HEADER;
@@ -141,7 +141,7 @@ uint8_t ITE6811DrvMhlTxReadEdid (void)
 
 	if (GetDDC_Access(&reg_val)) {
         memset(g_CommData, 0x00, GLOBAL_BYTE_BUF_BLOCK_SIZE);
-        iteReadEdidBlock(g_CommData, 0);
+        iteReadEdidBlock(g_CommData, 0, 0);
 		Result = ParseEDID(g_CommData, &NumOfExtensions);
 
 		if (Result != EDID_OK) {
@@ -227,7 +227,7 @@ static uint8_t Parse861Extensions(uint8_t NumOfExtensions)
             Offset = EDID_BLOCK_SIZE;
         }
         Segment = (uint8_t) (Block / 2);
-        iteReadEdidBlock(g_CommData,Block);
+        iteReadEdidBlock(g_CommData,Block, Offset);
         TX_EDID_PRINT("EDID DATA (Segment = %d Block = %d Offset = %d):\n", (int) Segment, (int) Block, (int) Offset);
 
         for (j=0, i=0; j<128; j++) {

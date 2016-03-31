@@ -247,7 +247,7 @@ static struct sensor_platform_data mma8452_info = {
 #endif
 
 #ifdef CONFIG_RK_HDMI
-#define RK_HDMI_RST_PIN 			RK30_PIN0_PA7
+#define RK_HDMI_RST_PIN 			RK30_PIN1_PA7
 static int rk_hdmi_power_init(void)
 {
 	int ret;
@@ -1148,16 +1148,6 @@ static int rk_platform_add_display_devices(void)
 // i2c
 #ifdef CONFIG_I2C0_RK30
 static struct i2c_board_info __initdata i2c0_info[] = {
-#if defined (CONFIG_MHL_IT6811)
-	{
-		.type			= "it6811_mhl",
-		.addr			= 0x4c,
-		.flags			= 0,
-		.irq			= RK30_PIN1_PA7,
-		.platform_data  = &rk_hdmi_pdata,
-	},
-
-#endif
 #if defined (CONFIG_GS_MMA8452)
 	{
 		.type	        = "gs_mma8452",
@@ -1245,13 +1235,13 @@ void  rk30_pwm_resume_voltage_set(void)
 
 #ifdef CONFIG_I2C2_RK30
 static struct i2c_board_info __initdata i2c2_info[] = {
-#if defined (CONFIG_TOUCHSCREEN_GSL3670) && defined(CONFIG_MACH_RK3188_Q72)
+#if defined (CONFIG_MHL_IT6811)
 	{
-		.type		= "gsl3670",
-		.addr		= 0x40,
-		.flags		= 0,
-		.irq		= TOUCH_INT_PIN,
-		.platform_data	= &gsl3670_info,
+		.type			= "it6811_mhl",
+		.addr			= 0x4c,
+		.flags			= 0,
+		.irq			= RK30_PIN1_PB3,
+		.platform_data  = &rk_hdmi_pdata,
 	},
 #endif
 
