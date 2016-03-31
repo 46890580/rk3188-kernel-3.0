@@ -86,7 +86,7 @@ int ssd2828_gpio_init(void *data) {
 		}
 	}
 	
-	if(spi->cs > INVALID_GPIO) {
+	if((int)(spi->cs) > INVALID_GPIO) {
 		ret = gpio_request(spi->cs, "ssd2828_spi_cs");
 		if (ret != 0) {
 			//gpio_free(spi->cs);
@@ -139,24 +139,41 @@ int ssd2828_gpio_deinit(void *data) {
 	struct reset_t *reset = &ssd2828->reset;
 	struct power_t *vdd = &ssd2828->vddio;
 	struct spi_t *spi = &ssd2828->spi;
-	
-	gpio_direction_input(reset->reset_pin);
-	gpio_free(reset->reset_pin);
-	
-	gpio_direction_input(vdd->enable_pin);
-	gpio_free(vdd->enable_pin);
+
+    if (reset->reset_pin > INVALID_GPIO) {
+    	gpio_direction_input(reset->reset_pin);
+    	gpio_free(reset->reset_pin);
+    }
+
+    if (vdd->enable_pin > INVALID_GPIO) {
+    	gpio_direction_input(vdd->enable_pin);
+    	gpio_free(vdd->enable_pin);
+    }
 	
 	vdd = &ssd2828->vdd_mipi;
-	gpio_direction_input(vdd->enable_pin);
-	gpio_free(vdd->enable_pin);
-	
-	gpio_direction_input(spi->cs);
-	gpio_free(spi->cs);
-	gpio_direction_input(spi->sck);
-	gpio_free(spi->sck);
-	gpio_direction_input(spi->mosi);
-	gpio_free(spi->mosi);
-	gpio_free(spi->miso);
+    if (vdd->enable_pin > INVALID_GPIO) {
+    	gpio_direction_input(vdd->enable_pin);
+    	gpio_free(vdd->enable_pin);
+    }
+
+    if ((int)(spi->cs) > INVALID_GPIO) {
+    	gpio_direction_input(spi->cs);
+    	gpio_free(spi->cs);
+    }
+
+    if (spi->sck > INVALID_GPIO) {
+    	gpio_direction_input(spi->sck);
+    	gpio_free(spi->sck);
+    }
+
+    if (spi->mosi > INVALID_GPIO) {
+    	gpio_direction_input(spi->mosi);
+    	gpio_free(spi->mosi);
+    }
+
+    if (spi->miso > INVALID_GPIO) {
+	    gpio_free(spi->miso);
+    }
 	
 	return 0;
 }
