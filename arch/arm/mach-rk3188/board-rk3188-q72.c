@@ -247,7 +247,11 @@ static struct sensor_platform_data mma8452_info = {
 #endif
 
 #ifdef CONFIG_RK_HDMI
+#if defined CONFIG_MACH_RK3188_Q3188M
 #define RK_HDMI_RST_PIN 			RK30_PIN1_PA7
+#else
+#define RK_HDMI_RST_PIN 			RK30_PIN3_PB2
+#endif
 static int rk_hdmi_power_init(void)
 {
 	int ret;
@@ -264,7 +268,6 @@ static int rk_hdmi_power_init(void)
 		msleep(50);
 		gpio_set_value(RK_HDMI_RST_PIN, GPIO_HIGH);
 		msleep(200);
-		printk("wangluheng: hdmi sysreset!\n");
 	}
 	return 0;
 }
@@ -1193,6 +1196,7 @@ static struct i2c_board_info __initdata i2c1_info[] = {
 		.irq		= RK30_PIN0_PB5,
 	},
 #endif
+
 #if defined (CONFIG_TMP_TC74) && defined(CONFIG_MACH_RK3188_Q3188M)
 	{
 		.type		= "tmp_tc74",
@@ -1235,7 +1239,16 @@ void  rk30_pwm_resume_voltage_set(void)
 
 #ifdef CONFIG_I2C2_RK30
 static struct i2c_board_info __initdata i2c2_info[] = {
-#if defined (CONFIG_MHL_IT6811)
+#if defined (CONFIG_TOUCHSCREEN_GSL3670) && defined(CONFIG_MACH_RK3188_Q72)
+	{
+		.type		= "gsl3670",
+		.addr		= 0x40,
+		.flags		= 0,
+		.irq		= TOUCH_INT_PIN,
+		.platform_data	= &gsl3670_info,
+	},
+#endif
+#if defined(CONFIG_MHL_IT6811) && defined(CONFIG_MACH_RK3188_Q3188M)
 	{
 		.type			= "it6811_mhl",
 		.addr			= 0x4c,
@@ -1413,6 +1426,7 @@ static void __init machine_rk30_board_init(void)
 	gpio_direction_output(RK30_PIN2_PD7, 1);
 	gpio_set_value(RK30_PIN2_PD7, GPIO_HIGH);
 
+#if defined(CONFIG_MACH_RK3188_Q3188M)
 	/* */
 	gpio_request(RK30_PIN1_PB4, NULL);
 	gpio_direction_output(RK30_PIN1_PB4, 1);
@@ -1426,6 +1440,7 @@ static void __init machine_rk30_board_init(void)
 	//gpio_set_value(RK30_PIN1_PA4, GPIO_LOW);
 	gpio_set_value(RK30_PIN1_PA4, GPIO_HIGH);
 	gpio_free(RK30_PIN1_PA4);
+#endif
 }
 #define HD_SCREEN_SIZE 1920UL*1200UL*4*3
 static void __init rk30_reserve(void)

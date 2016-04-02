@@ -69,8 +69,7 @@ void hdmi_init_lcdc(struct rk29fb_screen *screen, struct rk29lcd_info *lcd_info)
 int hdmi_set_info(struct rk29fb_screen *screen, unsigned int vic)
 {
     int i;
-
-	printk("%s entering...\n", __FUNCTION__);
+    
     if(screen == NULL)
     	return -1;
     
