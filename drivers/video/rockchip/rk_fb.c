@@ -2041,6 +2041,9 @@ int rk_fb_disp_scale_all(u8 left, u8 right, u8 top, u8 bottom, u8 lcdc_id)
 	return 0;
 }
 
+//#define EXTRA_SIZE 0
+#define EXTRA_SIZE get_fb_size()
+
 static int rk_request_fb_buffer(struct fb_info *fbi,int fb_id)
 {
 	struct rk_lcdc_device_driver * dev_drv = (struct rk_lcdc_device_driver * )fbi->par;
@@ -2059,7 +2062,7 @@ static int rk_request_fb_buffer(struct fb_info *fbi,int fb_id)
 		if (!strcmp(fbi->fix.id, "fb0")) {
 			size_t fb_mem_size;
 
-			fb_mem_size = get_fb_size();
+			fb_mem_size = get_fb_size() + EXTRA_SIZE;
 			handle = ion_alloc(fb_inf->ion_client, fb_mem_size, 0,
 					ION_HEAP_CARVEOUT_MASK, 0);
 			ret = ion_phys(fb_inf->ion_client, handle, &phy_addr, &len);
@@ -2074,9 +2077,9 @@ static int rk_request_fb_buffer(struct fb_info *fbi,int fb_id)
 
 			dev_drv->ion_hdl = handle;
 		} else {
-			fbi->fix.smem_start = fb_inf->fb[0]->fix.smem_start;
+			fbi->fix.smem_start = fb_inf->fb[0]->fix.smem_start + EXTRA_SIZE;
 			fbi->fix.smem_len = fb_inf->fb[0]->fix.smem_len;
-			fbi->screen_base = fb_inf->fb[0]->screen_base;
+			fbi->screen_base = fb_inf->fb[0]->screen_base + EXTRA_SIZE;
 		}
 
 		pr_info("%s:phy:%lx>>vir:%p>>len:0x%x\n", fbi->fix.id,
