@@ -74,8 +74,6 @@ static struct spi_board_info board_spi_devices[] = {
 };
 
 /* GSL3670 touchpad */
-#if defined (CONFIG_TOUCHSCREEN_GSL3670)
-
 #define TOUCH_RESET_PIN         RK30_PIN0_PB6
 #define TOUCH_INT_PIN           RK30_PIN1_PB7
 
@@ -111,15 +109,13 @@ static struct ts_hw_data gsl3670_info = {
 	.init_platform_hw = gsl3670_init_platform_hw,
 };
 
-#endif
-
 /***********************************************************
  *	rk30  backlight
  ************************************************************/
 #ifdef CONFIG_BACKLIGHT_RK29_BL
 #define PWM_ID            3
 #define PWM_MODE          PWM3
-#define PWM_EFFECT_VALUE  1
+#define PWM_EFFECT_VALUE  0
 
 #define LCD_DISP_ON_PIN
 
@@ -205,7 +201,6 @@ static struct platform_device rk29_device_backlight = {
 #endif
 
 /* TC74 temperature sensor */
-#if defined (CONFIG_TMP_TC74)
 static int tc74_init_platform_hw(void)
 {
 	printk("tc74 hardware init\n");
@@ -218,10 +213,8 @@ static struct sensor_platform_data tc74_platdata = {
 	.poll_delay_ms = 300,
 	.init_platform_hw = tc74_init_platform_hw,
 };
-#endif
 
 /*MMA8452 gsensor*/
-#if defined (CONFIG_GS_MMA8452)
 #define MMA8452_INT_PIN   RK30_PIN0_PB7
 
 static int mma8452_init_platform_hw(void)
@@ -234,16 +227,13 @@ static struct sensor_platform_data mma8452_info = {
 	.irq_enable = 1,
 	.poll_delay_ms = 30,
 	.init_platform_hw = mma8452_init_platform_hw,
-#if 1	/* ro.rk.hwrotation=270 */
+	/* ro.rk.hwrotation=270 */
 	.orientation = {0, 1, 0, 1, 0, 0, 0, 0, -1},
-#else
-	.orientation = {1, 0, 0, 0, -1, 0, 0, 0, -1},
-#endif
+	/* .orientation = {1, 0, 0, 0, -1, 0, 0, 0, -1}, */
 };
-#endif
 
 #ifdef CONFIG_RK_HDMI
-#define RK_HDMI_RST_PIN 			RK30_PIN3_PB2
+#define RK_HDMI_RST_PIN 			RK30_PIN1_PA7
 static int rk_hdmi_power_init(void)
 {
 	int ret;
@@ -269,8 +259,6 @@ static struct rk_hdmi_platform_data rk_hdmi_pdata = {
 #endif
 
 
-#ifdef CONFIG_FB_ROCKCHIP
-
 #define LCD_CS_PIN         INVALID_GPIO
 #define LCD_CS_VALUE       GPIO_HIGH
 
@@ -281,32 +269,24 @@ static int rk_fb_io_init(struct rk29_fb_setting_info *fb_setting)
 {
 	int ret = 0;
 
-	if(LCD_CS_PIN !=INVALID_GPIO)
-	{
+	if(LCD_CS_PIN !=INVALID_GPIO) {
 		ret = gpio_request(LCD_CS_PIN, NULL);
-		if (ret != 0)
-		{
+		if (ret != 0) {
 			gpio_free(LCD_CS_PIN);
 			printk(KERN_ERR "request lcd cs pin fail!\n");
 			return -1;
-		}
-		else
-		{
+		} else {
 			gpio_direction_output(LCD_CS_PIN, LCD_CS_VALUE);
 		}
 	}
 
-	if(LCD_EN_PIN !=INVALID_GPIO)
-	{
+	if(LCD_EN_PIN !=INVALID_GPIO) {
 		ret = gpio_request(LCD_EN_PIN, NULL);
-		if (ret != 0)
-		{
+		if (ret != 0) {
 			gpio_free(LCD_EN_PIN);
 			printk(KERN_ERR "request lcd en pin fail!\n");
 			return -1;
-		}
-		else
-		{
+		} else {
 			gpio_direction_output(LCD_EN_PIN, LCD_EN_VALUE);
 		}
 	}
@@ -314,48 +294,41 @@ static int rk_fb_io_init(struct rk29_fb_setting_info *fb_setting)
 }
 static int rk_fb_io_disable(void)
 {
-	if(LCD_CS_PIN !=INVALID_GPIO)
-	{
+	if(LCD_CS_PIN !=INVALID_GPIO) {
 		gpio_set_value(LCD_CS_PIN, !LCD_CS_VALUE);
 	}
-	if(LCD_EN_PIN !=INVALID_GPIO)
-	{
+
+	if(LCD_EN_PIN !=INVALID_GPIO) {
 		gpio_set_value(LCD_EN_PIN, !LCD_EN_VALUE);
 	}
 	return 0;
 }
 static int rk_fb_io_enable(void)
 {
-	if(LCD_CS_PIN !=INVALID_GPIO)
-	{
+	if(LCD_CS_PIN !=INVALID_GPIO) {
 		gpio_set_value(LCD_CS_PIN, LCD_CS_VALUE);
 	}
-	if(LCD_EN_PIN !=INVALID_GPIO)
-	{
+
+	if(LCD_EN_PIN !=INVALID_GPIO) {
 		gpio_set_value(LCD_EN_PIN, LCD_EN_VALUE);
 	}
 	return 0;
 }
 
-#if defined(CONFIG_LCDC0_RK3066B) || defined(CONFIG_LCDC0_RK3188)
 struct rk29fb_info lcdc0_screen_info = {
-#if defined(CONFIG_RK_HDMI)
-	.prop		= EXTEND,       //extend display device
-	.lcd_info	= NULL,
-	.set_screen_info = hdmi_init_lcdc,
-#endif
-};
-#endif
-
-#if defined(CONFIG_LCDC1_RK3066B) || defined(CONFIG_LCDC1_RK3188)
-struct rk29fb_info lcdc1_screen_info = {
 	.prop		= PRMRY,                //primary display device
 	.io_init	= rk_fb_io_init,
 	.io_disable	= rk_fb_io_disable,
 	.io_enable	= rk_fb_io_enable,
 	.set_screen_info = set_lcd_info,
 };
-#endif
+
+struct rk29fb_info lcdc1_screen_info = {
+	.prop		= EXTEND,       //extend display device
+	.lcd_info	= NULL,
+	.set_screen_info = hdmi_init_lcdc,
+};
+
 
 static struct resource resource_fb[] = {
 	[0] = {
@@ -384,8 +357,7 @@ static struct platform_device device_fb = {
 	.num_resources	= ARRAY_SIZE(resource_fb),
 	.resource	= resource_fb,
 };
-#endif
-#if defined(CONFIG_ARCH_RK3188)
+
 static struct resource resource_mali[] = {
 	[0] = {
 		.name  = "ump buf",
@@ -402,9 +374,7 @@ static struct platform_device device_mali= {
 	.num_resources	= ARRAY_SIZE(resource_mali),
 	.resource	= resource_mali,
 };
-#endif
 
-#if defined(CONFIG_LCDC0_RK3066B) || defined(CONFIG_LCDC0_RK3188)
 static struct resource resource_lcdc0[] = {
 	[0] = {
 		.name  = "lcdc0 reg",
@@ -430,8 +400,7 @@ static struct platform_device device_lcdc0 = {
 		.platform_data = &lcdc0_screen_info,
 	},
 };
-#endif
-#if defined(CONFIG_LCDC1_RK3066B) || defined(CONFIG_LCDC1_RK3188)
+
 static struct resource resource_lcdc1[] = {
 	[0] = {
 		.name  = "lcdc1 reg",
@@ -456,9 +425,7 @@ static struct platform_device device_lcdc1 = {
 		.platform_data = &lcdc1_screen_info,
 	},
 };
-#endif
 
-#if defined(CONFIG_SSD2828_RGB2MIPI)
 
 #include "../../../drivers/video/rockchip/transmitter/mipi_dsi.h"
 
@@ -504,7 +471,6 @@ static int ssd2828_power_up(void)
 	ssd2828_reset(NULL);
 
 	return 0;
-
 }
 
 static int ssd2828_power_down(void)
@@ -579,7 +545,6 @@ static struct platform_device ssd2828_mipi_device = {
 		.platform_data = &ssd2828_platform_data,
 	},
 };
-#endif
 
 #ifdef CONFIG_ANDROID_TIMED_GPIO
 static struct timed_gpio timed_gpios[] = {
@@ -931,7 +896,6 @@ static struct platform_device rk30_device_adc_battery = {
 #define PHY_PWR_EN_GPIO	RK30_PIN0_PC0
 #define PHY_PWR_EN_VALUE   GPIO_HIGH
 #include "../mach-rk30/board-rk31-sdk-vmac.c"
-
 #endif
 
 #ifdef CONFIG_RFKILL_RK
@@ -1019,75 +983,12 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_RFKILL_RK
 	&device_rfkill_rk,
 #endif
-#if defined(CONFIG_ARCH_RK3188)
+
 	&device_mali,
-#endif
-#if defined(CONFIG_SSD2828_RGB2MIPI)
 	&ssd2828_mipi_device,
-#endif
 };
 
 
-#if defined(CONFIG_MFD_RK616)
-#define RK616_RST_PIN 			RK30_PIN3_PB2
-#define RK616_PWREN_PIN			INVALID_GPIO
-#define RK616_SCL_RATE			(100*1000)   //i2c scl rate
-static int rk616_power_on_init(void)
-{
-	int ret;
-
-	if(RK616_PWREN_PIN != INVALID_GPIO)
-	{
-		ret = gpio_request(RK616_PWREN_PIN, "rk616 pwren");
-		if (ret == 0)
-			gpio_direction_output(RK616_PWREN_PIN,GPIO_HIGH);
-	}
-
-	if(RK616_RST_PIN != INVALID_GPIO)
-	{
-		ret = gpio_request(RK616_RST_PIN, "rk616 reset");
-		if (ret == 0)
-		{
-			gpio_direction_output(RK616_RST_PIN, GPIO_HIGH);
-			msleep(2);
-			gpio_direction_output(RK616_RST_PIN, GPIO_LOW);
-			msleep(10);
-			gpio_set_value(RK616_RST_PIN, GPIO_HIGH);
-		}
-	}
-
-	return 0;
-}
-
-
-static int rk616_power_deinit(void)
-{
-	if(RK616_PWREN_PIN != INVALID_GPIO)
-	{
-		gpio_set_value(RK616_PWREN_PIN,GPIO_LOW);
-		gpio_free(RK616_PWREN_PIN);
-	}
-
-	if(RK616_RST_PIN != INVALID_GPIO)
-	{
-		gpio_set_value(RK616_RST_PIN,GPIO_LOW);
-		gpio_free(RK616_RST_PIN);
-	}
-
-	return 0;
-}
-
-static struct rk616_platform_data rk616_pdata = {
-	.power_init	= rk616_power_on_init,
-	.power_deinit	= rk616_power_deinit,
-	.scl_rate	= RK616_SCL_RATE,
-	.lcd0_func	= INPUT,        //port lcd0 as input
-	.lcd1_func	= INPUT,        //port lcd1 as input
-	.lvds_ch_nr	= 1,            //the number of used lvds channel
-	.hdmi_irq	= INVALID_GPIO,
-	.spk_ctl_gpio	= RK30_PIN2_PD7,
-};
-#endif
 
 static int rk_platform_add_display_devices(void)
 {
@@ -1095,30 +996,18 @@ static int rk_platform_add_display_devices(void)
 	struct platform_device *lcdc0 = NULL; //lcdc0
 	struct platform_device *lcdc1 = NULL; //lcdc1
 	struct platform_device *bl = NULL; //backlight
-#ifdef CONFIG_FB_ROCKCHIP
+
 	fb = &device_fb;
-#endif
-
-#if defined(CONFIG_LCDC0_RK3066B) || defined(CONFIG_LCDC0_RK3188)
 	lcdc0 = &device_lcdc0,
-#endif
-
-#if defined(CONFIG_LCDC1_RK3066B) || defined(CONFIG_LCDC1_RK3188)
-	      lcdc1 = &device_lcdc1,
-#endif
-
-#ifdef CONFIG_BACKLIGHT_RK29_BL
-	      bl = &rk29_device_backlight,
-#endif
-	      __rk_platform_add_display_devices(fb,lcdc0,lcdc1,bl);
+	lcdc1 = &device_lcdc1,
+	bl = &rk29_device_backlight,
+	__rk_platform_add_display_devices(fb,lcdc0,lcdc1,bl);
 
 	return 0;
 }
 
 // i2c
-#ifdef CONFIG_I2C0_RK30
 static struct i2c_board_info __initdata i2c0_info[] = {
-#if defined (CONFIG_GS_MMA8452)
 	{
 		.type	        = "gs_mma8452",
 		.addr	        = 0x1d,
@@ -1126,15 +1015,7 @@ static struct i2c_board_info __initdata i2c0_info[] = {
 		.irq	        = MMA8452_INT_PIN,
 		.platform_data = &mma8452_info,
 	},
-#endif
-#if defined (CONFIG_TMP_TC74)
-	{
-		.type		= "tmp_tc74",
-		.addr		= 0x48,
-		.flags		= 0,
-		.platform_data	= &tc74_platdata,
-	},
-#endif
+
 #if defined (CONFIG_SND_SOC_RK1000)
 	{
 		.type          = "rk1000_i2c_codec",
@@ -1149,55 +1030,52 @@ static struct i2c_board_info __initdata i2c0_info[] = {
 #endif
 
 };
-#endif
 
 int __sramdata g_pmic_type =  0;
-#ifdef CONFIG_I2C1_RK30
 
 static struct i2c_board_info __initdata i2c1_info[] = {
-#if defined (CONFIG_RTC_HYM8563)
 	{
 		.type		= "rtc_hym8563",
 		.addr		= 0x51,
 		.flags		= 0,
 		.irq		= RK30_PIN0_PB5,
 	},
-#endif
+
+	{
+		.type		= "tmp_tc74",
+		.addr		= 0x48,
+		.flags		= 0,
+		.platform_data	= &tc74_platdata,
+	},
 };
-#endif
 
-void __sramfunc board_pmu_suspend(void)
-{      
-}
-
-void __sramfunc board_pmu_resume(void)
-{      
-}
+void __sramfunc board_pmu_suspend(void){}
+void __sramfunc board_pmu_resume(void){}
 
 int __sramdata gpio3d6_iomux,gpio3d6_do,gpio3d6_dir,gpio3d6_en;
 
 #define grf_readl(offset)	readl_relaxed(RK30_GRF_BASE + offset)
 #define grf_writel(v, offset)	do { writel_relaxed(v, RK30_GRF_BASE + offset); dsb(); } while (0)
 
-void __sramfunc rk30_pwm_logic_suspend_voltage(void)
-{
-}
+void __sramfunc rk30_pwm_logic_suspend_voltage(void){}
+void __sramfunc rk30_pwm_logic_resume_voltage(void){}
+void  rk30_pwm_suspend_voltage_set(void){}
+void  rk30_pwm_resume_voltage_set(void){}
 
-void __sramfunc rk30_pwm_logic_resume_voltage(void)
-{
-}
-
-void  rk30_pwm_suspend_voltage_set(void)
-{
-}
-
-void  rk30_pwm_resume_voltage_set(void)
-{
-}
-
-#ifdef CONFIG_I2C2_RK30
 static struct i2c_board_info __initdata i2c2_info[] = {
-#if defined (CONFIG_TOUCHSCREEN_GSL3670) && defined(CONFIG_MACH_RK3188_Q72)
+	{
+		.type			= "it6811_mhl",
+		.addr			= 0x4c,
+		.flags			= 0,
+		.irq			= RK30_PIN1_PB3,
+		.platform_data  = &rk_hdmi_pdata,
+	},
+};
+
+static struct i2c_board_info __initdata i2c3_info[] = {
+};
+
+static struct i2c_board_info __initdata i2c4_info[] = {
 	{
 		.type		= "gsl3670",
 		.addr		= 0x40,
@@ -1205,39 +1083,16 @@ static struct i2c_board_info __initdata i2c2_info[] = {
 		.irq		= TOUCH_INT_PIN,
 		.platform_data	= &gsl3670_info,
 	},
-#endif
-};
-
-#endif
-
-#ifdef CONFIG_I2C3_RK30
-static struct i2c_board_info __initdata i2c3_info[] = {
-};
-#endif
-
-#ifdef CONFIG_I2C4_RK30
-static struct i2c_board_info __initdata i2c4_info[] = {
 
 #if defined (CONFIG_SND_SOC_RT5616)
 	{
 		.type                   = "rt5616",
 		.addr                   = 0x1B,
 		.flags                  = 0,
-
-	},
-#endif
-
-#if defined (CONFIG_MFD_RK616)
-	{
-		.type		= "rk616",
-		.addr		= 0x50,
-		.flags		= 0,
-		.platform_data	= &rk616_pdata,
 	},
 #endif
 
 };
-#endif
 
 #ifdef CONFIG_I2C_GPIO_RK30
 #define I2C_SDA_PIN     INVALID_GPIO// RK30_PIN2_PD6   //set sda_pin here
@@ -1267,18 +1122,23 @@ static void __init rk30_i2c_register_board_info(void)
 #ifdef CONFIG_I2C0_RK30
 	i2c_register_board_info(0, i2c0_info, ARRAY_SIZE(i2c0_info));
 #endif
+
 #ifdef CONFIG_I2C1_RK30
 	i2c_register_board_info(1, i2c1_info, ARRAY_SIZE(i2c1_info));
 #endif
+
 #ifdef CONFIG_I2C2_RK30
 	i2c_register_board_info(2, i2c2_info, ARRAY_SIZE(i2c2_info));
 #endif
+
 #ifdef CONFIG_I2C3_RK30
 	i2c_register_board_info(3, i2c3_info, ARRAY_SIZE(i2c3_info));
 #endif
+
 #ifdef CONFIG_I2C4_RK30
 	i2c_register_board_info(4, i2c4_info, ARRAY_SIZE(i2c4_info));
 #endif
+
 #ifdef CONFIG_I2C_GPIO_RK30
 	i2c_register_board_info(5, i2c_gpio_info, ARRAY_SIZE(i2c_gpio_info));
 #endif
@@ -1288,15 +1148,15 @@ static void __init rk30_i2c_register_board_info(void)
 #include <plat/key.h>
 
 static struct rk29_keys_button key_button[] = {
-#if 0   /* KEY_POWER report by PMU driver */
-	{
+	/* KEY_POWER report by PMU driver */
+	/*{
 		.desc           = "play",
 		.code           = KEY_POWER,
 		.gpio           = RK30_PIN0_PA4,
 		.active_low     = PRESS_LEV_LOW,
 		.wakeup         = 1,
-	},
-#endif
+	},*/
+
 	{
 		.desc           = "vol+",
 		.code           = KEY_VOLUMEUP,
@@ -1365,30 +1225,44 @@ static void __init machine_rk30_board_init(void)
 	gpio_direction_output(RK30_PIN2_PD7, 1);
 	gpio_set_value(RK30_PIN2_PD7, GPIO_HIGH);
 
+	/* */
+	gpio_request(RK30_PIN1_PB4, NULL);
+	gpio_direction_output(RK30_PIN1_PB4, 1);
+	gpio_set_value(RK30_PIN1_PB4, GPIO_LOW);
+	gpio_free(RK30_PIN1_PB4);
+
+
+	/* Pull up SYSRSTN of IT6801 */
+	gpio_request(RK30_PIN1_PA4, NULL);
+	gpio_direction_output(RK30_PIN1_PA4, 1);
+	//gpio_set_value(RK30_PIN1_PA4, GPIO_LOW);
+	gpio_set_value(RK30_PIN1_PA4, GPIO_HIGH);
+	gpio_free(RK30_PIN1_PA4);
 }
+
 #define HD_SCREEN_SIZE 1920UL*1200UL*4*3
 static void __init rk30_reserve(void)
 {
 	int size, ion_reserve_size;
-#if defined(CONFIG_ARCH_RK3188)
+
 	/*if lcd resolution great than or equal to 1920*1200,reserve the ump memory */
-	if(!(get_fb_size() < ALIGN(HD_SCREEN_SIZE,SZ_1M)))
-	{
+	if(!(get_fb_size() < ALIGN(HD_SCREEN_SIZE,SZ_1M))) {
 		int ump_mem_phy_size=512UL*1024UL*1024UL; 
 		resource_mali[0].start = board_mem_reserve_add("ump buf", ump_mem_phy_size); 
 		resource_mali[0].end = resource_mali[0].start + ump_mem_phy_size -1;
 	}
-#endif
+
 #ifdef CONFIG_ION
 	size = ddr_get_cap() >> 20;
+
 	if(size >= 1024) { // DDR >= 1G, set ion to 120M
 		rk30_ion_pdata.heaps[0].size = ION_RESERVE_SIZE_220M;
 		ion_reserve_size = ION_RESERVE_SIZE_220M;
-	}
-	else {
+	} else {
 		rk30_ion_pdata.heaps[0].size = ION_RESERVE_SIZE;
 		ion_reserve_size = ION_RESERVE_SIZE;
 	}
+
 	rk30_ion_pdata.heaps[0].size += get_fb_size();
 	ion_reserve_size += get_fb_size();
 	printk("ddr size = %d M, set ion_reserve_size size to %d\n", size, ion_reserve_size);
@@ -1398,14 +1272,11 @@ static void __init rk30_reserve(void)
 	/*
 	 * get fbbuf from ion
 	 */
-	//#ifdef CONFIG_FB_ROCKCHIP
 #if 0
 	resource_fb[0].start = board_mem_reserve_add("fb0 buf", get_fb_size());
 	resource_fb[0].end = resource_fb[0].start + get_fb_size()- 1;
-#if 0
 	resource_fb[1].start = board_mem_reserve_add("ipp buf", RK30_FB0_MEM_SIZE);
 	resource_fb[1].end = resource_fb[1].start + RK30_FB0_MEM_SIZE - 1;
-#endif
 
 #if defined(CONFIG_FB_ROTATE) || !defined(CONFIG_THREE_FB_BUFFER)
 	resource_fb[2].start = board_mem_reserve_add("fb2 buf",get_fb_size());
@@ -1426,7 +1297,6 @@ static void __init rk30_reserve(void)
  * @cpu_volt	: arm voltage depend on frequency
  */
 
-#if defined(CONFIG_ARCH_RK3188)
 //sdk
 static struct cpufreq_frequency_table dvfs_arm_table_volt_level0[] = {
 	{.frequency = 312 * 1000,       .index = 850 * 1000},
@@ -1497,35 +1367,6 @@ static struct cpufreq_frequency_table dvfs_ddr_table_volt_level0[] = {
 #define dvfs_gpu_table dvfs_gpu_table_volt_level1
 #define dvfs_ddr_table dvfs_ddr_table_volt_level0
 
-#else
-//for RK3168 && RK3066B
-static struct cpufreq_frequency_table dvfs_arm_table[] = {
-	{.frequency = 312 * 1000,       .index = 950 * 1000},
-	{.frequency = 504 * 1000,       .index = 1000 * 1000},
-	{.frequency = 816 * 1000,       .index = 1050 * 1000},
-	{.frequency = 1008 * 1000,      .index = 1125 * 1000},
-	{.frequency = 1200 * 1000,      .index = 1200 * 1000},
-	//{.frequency = 1416 * 1000,      .index = 1250 * 1000},
-	//{.frequency = 1608 * 1000,      .index = 1300 * 1000},
-	{.frequency = CPUFREQ_TABLE_END},
-};
-
-static struct cpufreq_frequency_table dvfs_gpu_table[] = {
-	{.frequency = 100 * 1000,       .index = 1000 * 1000},
-	{.frequency = 200 * 1000,       .index = 1000 * 1000},
-	{.frequency = 266 * 1000,       .index = 1050 * 1000},
-	//{.frequency = 300 * 1000,       .index = 1050 * 1000},
-	{.frequency = 400 * 1000,       .index = 1125 * 1000},
-	{.frequency = CPUFREQ_TABLE_END},
-};
-
-static struct cpufreq_frequency_table dvfs_ddr_table[] = {
-	{.frequency = 200 * 1000 + DDR_FREQ_SUSPEND,    .index = 1000 * 1000},
-	{.frequency = 300 * 1000 + DDR_FREQ_VIDEO,      .index = 1050 * 1000},
-	{.frequency = 400 * 1000 + DDR_FREQ_NORMAL,     .index = 1100 * 1000},
-	{.frequency = CPUFREQ_TABLE_END},
-};
-#endif
 /******************************** arm dvfs frequency volt table end **********************************/
 //#define DVFS_CPU_TABLE_SIZE	(ARRAY_SIZE(dvfs_cpu_logic_table))
 //static struct cpufreq_frequency_table cpu_dvfs_table[DVFS_CPU_TABLE_SIZE];
