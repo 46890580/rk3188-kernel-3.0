@@ -2041,8 +2041,8 @@ int rk_fb_disp_scale_all(u8 left, u8 right, u8 top, u8 bottom, u8 lcdc_id)
 	return 0;
 }
 
-//#define EXTRA_SIZE 0
-#define EXTRA_SIZE get_fb_size()
+#define EXTRA_SIZE 0
+//#define EXTRA_SIZE get_fb_size()
 
 static int rk_request_fb_buffer(struct fb_info *fbi,int fb_id)
 {
