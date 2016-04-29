@@ -30,11 +30,15 @@
 //#include "rockchip_gslX680.h"
 
 #if defined(CONFIG_MACH_RK3188_Q72) || defined(CONFIG_MACH_RK3188_Q3188M)
-#include "rockchip_gsl3670_q72.h"
+	#if defined(CONFIG_LCD_CLAA101FP08_MIPI)
+	#include "rockchip_gsl3670_1280x800.h"
+	#else
+	#include "rockchip_gsl3670_q72.h"
+	#endif
 #elif defined(CONFIG_MACH_RK3188_M7R)
-#include "rockchip_gsl3670_m7r_800x480.h"
+	#include "rockchip_gsl3670_m7r_800x480.h"
 #else
-#warning "Please check you hardware configuration"
+	#warning "Please check you hardware configuration"
 #endif
 
 

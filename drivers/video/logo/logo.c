@@ -132,6 +132,11 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 #ifdef CONFIG_LOGO_LINUX_800x480_CLUT224
                 logo = &logo_linux_800x480_clut224;
 #endif
+
+#ifdef CONFIG_LOGO_CLUT224_SMARTLOGIC_1280X800
+	logo = &logo_smartlogic_1920x1200_clut224;
+#endif
+
 #ifdef CONFIG_LOGO_LOWERPOWER_WARNING
 		if( 1 ==  get_battery_status()){
 			logo = &logo_linux_lowerpower_clut224;

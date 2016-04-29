@@ -127,4 +127,7 @@ config LOGO_LINUX_BMP_SMARTLOGIC_1280X800
         bool "Bmp logo SmartLogic 1280x800"
 	depends on LOGO_LINUX_BMP
 	default n
+config LOGO_CLUT224_SMARTLOGIC_1280X800
+        bool "224-color 1920x1200 SmartLogic logo"
+	default n
 endif # LOGO
