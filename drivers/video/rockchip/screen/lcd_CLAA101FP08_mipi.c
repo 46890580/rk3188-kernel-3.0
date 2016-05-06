@@ -146,10 +146,11 @@ static unsigned int regs_after[] = {
 
 	(0x00b10000 | (ssdV_PW << 8) | ssdH_PW),
 	(0x00b20000 | (ssdV_BP << 8) | ssdH_BP),
-	(0x00b30000 | (ssdH_FP << 8) | ssdH_FP),
+	(0x00b30000 | (ssdV_FP << 8) | ssdH_FP),
 	(0x00b40000 | H_VD),
 	(0x00b50000 | V_VD),
 	(0x00b60000 | (DCLK_POL << 13) | (HSYNC_POL << 14) | (VSYNC_POL << 15) | 3), /* non-burst mode with sync pulse */
+	//0x00ed0808,
 
 	0x00de0003, /* 4 lanes, b11 = 4 lanes */
 	0x00d60005,
