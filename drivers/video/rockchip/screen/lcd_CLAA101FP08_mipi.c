@@ -38,7 +38,7 @@
 #else
 #define DCLK_POL	0
 #endif
-#define DEN_POL		1
+#define DEN_POL		0
 #define VSYNC_POL	0
 #define HSYNC_POL	0
 
@@ -81,7 +81,7 @@ int rk_lcd_init(void) {
 	//dsi_enable_video_mode(0);
 	//dsi_enable_command_mode(1);
 
-#if 1
+#if 0
 	dcs[0] = LPDT;
 	dcs[1] = dcs_exit_sleep_mode; 
 	dsi_send_dcs_packet(dcs, 2);
