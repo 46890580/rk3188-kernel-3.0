@@ -75,17 +75,26 @@ int rk_lcd_init(void) {
 
 	printk("%s", __FUNCTION__);
 
-	msleep(100);
-	/*below is changeable*/
-	//dsi_enable_hs_clk(1);
-	//dsi_enable_video_mode(0);
-	//dsi_enable_command_mode(1);
+	msleep(50);
 
 #if 0
 	dcs[0] = LPDT;
-	dcs[1] = dcs_exit_sleep_mode; 
+	dcs[1] = dcs_set_display_off; 
 	dsi_send_dcs_packet(dcs, 2);
 	msleep(1);
+	dcs[0] = LPDT;
+	dcs[1] = dcs_enter_sleep_mode; 
+	dsi_send_dcs_packet(dcs, 2);
+	msleep(10);
+#endif
+
+#if 1
+	printk("wangluheng sent dcs......\n");
+	dsi_enable_hs_clk(1);
+	dcs[0] = LPDT;
+	dcs[1] = dcs_exit_sleep_mode; 
+	dsi_send_dcs_packet(dcs, 2);
+	msleep(1000);
 	dcs[0] = LPDT;
 	dcs[1] = dcs_set_display_on;
 	dsi_send_dcs_packet(dcs, 2);
@@ -98,12 +107,8 @@ int rk_lcd_init(void) {
 	dsi_send_dcs_packet(dcs, 1);
 #endif
 
-
-	msleep(10);
-	dsi_enable_hs_clk(1);
-
-	dsi_enable_command_mode(0);
-	dsi_enable_video_mode(1);
+	//dsi_enable_command_mode(0);
+	//dsi_enable_video_mode(1);
 	//printk("++++++++++++++++%s:%d\n", __func__, __LINE__);
 
 	return 0;

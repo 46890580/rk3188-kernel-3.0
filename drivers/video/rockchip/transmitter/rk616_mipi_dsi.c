@@ -72,7 +72,7 @@
         printf("\n");\
     }while(0);
 #else
-#define	MIPI_DBG(x...)  
+#define	MIPI_DBG  printk
 #endif    /* end of CONFIG_MIPI_DSI_FT */
 #endif
 
