@@ -205,6 +205,9 @@ config LCD_BP101WX1
 config LCD_CLAA070WP06G_MIPI
 	bool "CLAA070WP06G mipi lcd"
 
+config LCD_CLAA101FP08_MIPI
+	bool "CLAA101FP08 mipi 1920x1200 lcd"
+
 config LCD_RK3168_FAC
         bool "RK3168 for factoryTool"     
 endchoice
