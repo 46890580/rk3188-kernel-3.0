@@ -1118,6 +1118,15 @@ static int rk_platform_add_display_devices(void)
 // i2c
 #ifdef CONFIG_I2C0_RK30
 static struct i2c_board_info __initdata i2c0_info[] = {
+#if defined (CONFIG_TOUCHSCREEN_GSL3670) && defined(CONFIG_MACH_RK3188_Q3188M)
+	{
+		.type		= "gsl3670",
+		.addr		= 0x40,
+		.flags		= 0,
+		.irq		= TOUCH_INT_PIN,
+		.platform_data	= &gsl3670_info,
+	},
+#endif
 #if defined (CONFIG_GS_MMA8452)
 	{
 		.type	        = "gs_mma8452",

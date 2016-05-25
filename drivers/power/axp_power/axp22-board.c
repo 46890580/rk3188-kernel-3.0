@@ -253,7 +253,7 @@ static struct regulator_init_data axp_regl_init_data[] = {
 			.initial_state = PM_SUSPEND_STANDBY,
 			.state_standby = {
 				.uV = AXP_LDO5_VALUE * 1000,
-				.enabled = 0,
+				.enabled = 1,
 			}
 #endif
 		},
