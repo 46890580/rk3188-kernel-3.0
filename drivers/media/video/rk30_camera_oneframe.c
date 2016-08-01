@@ -1981,10 +1981,13 @@ static void rk_camera_setup_format(struct soc_camera_device *icd, __u32 host_pix
 	struct soc_camera_host *ici = to_soc_camera_host(icd->dev.parent);
     struct rk_camera_dev *pcdev = ici->priv;
     unsigned int cif_fs = 0,cif_crop = 0;
-    unsigned int cif_fmt_val = read_cif_reg(pcdev->base,CIF_CIF_FOR) | INPUT_MODE_YUV|YUV_INPUT_422|INPUT_420_ORDER_EVEN|OUTPUT_420_ORDER_EVEN;
-	
+    //unsigned int cif_fmt_val = read_cif_reg(pcdev->base,CIF_CIF_FOR) | INPUT_MODE_YUV|YUV_INPUT_422|INPUT_420_ORDER_EVEN|OUTPUT_420_ORDER_EVEN;    
+    unsigned int cif_fmt_val = 0x1 | INPUT_MODE_YUV|YUV_INPUT_422|INPUT_420_ORDER_EVEN|OUTPUT_420_ORDER_EVEN;    
+
 	const struct soc_mbus_pixelfmt *fmt;
 	fmt = soc_mbus_get_fmtdesc(icd_code);
+
+	printk("QiHui: 0x%8x\n", read_cif_reg(pcdev->base,CIF_CIF_FOR));
 
 	if((host_pixfmt == V4L2_PIX_FMT_RGB565) || (host_pixfmt == V4L2_PIX_FMT_RGB24)){
 		if(fmt->fourcc == V4L2_PIX_FMT_NV12)
@@ -2049,6 +2052,8 @@ static void rk_camera_setup_format(struct soc_camera_device *icd, __u32 host_pix
     write_cif_reg(pcdev->base,CIF_CIF_CTRL,AXI_BURST_16|MODE_ONEFRAME|DISABLE_CAPTURE);   /* ddl@rock-chips.com : vip ahb burst 16 */
    // write_cif_reg(pcdev->base,CIF_CIF_INTEN, 0x01|0x200);    //capture complete interrupt enable
 
+    printk("QiHui: cif_fmt_val=0x%08x\n", cif_fmt_val);
+//    cif_fmt_val=0x00010060;
     write_cif_reg(pcdev->base,CIF_CIF_FOR,cif_fmt_val);         /* ddl@rock-chips.com: VIP capture mode and capture format must be set before FS register set */
 
     write_cif_reg(pcdev->base,CIF_CIF_INTSTAT,0xFFFFFFFF); 
@@ -2085,7 +2090,8 @@ static void rk_camera_setup_format_tv_in(struct soc_camera_device *icd, __u32 ho
 	unsigned int cif_fs = 0,cif_crop = 0;
 	v4l2_std_id stdid = 0;
 
-	unsigned int cif_fmt_val = read_cif_reg(pcdev->base,CIF_CIF_FOR) | INPUT_MODE_PAL | YUV_INPUT_422;
+	//unsigned int cif_fmt_val = read_cif_reg(pcdev->base,CIF_CIF_FOR) | INPUT_MODE_PAL | YUV_INPUT_422;
+	unsigned int cif_fmt_val = 0x1 | INPUT_MODE_NTSC | YUV_INPUT_422;
 
 	const struct soc_mbus_pixelfmt *fmt;
 	struct v4l2_subdev *sd;
@@ -2095,7 +2101,8 @@ static void rk_camera_setup_format_tv_in(struct soc_camera_device *icd, __u32 ho
 	sd = soc_camera_to_subdev(icd);
 	v4l2_subdev_call(sd, video, querystd, &stdid);
 	cif_fmt_val &= ~( (7 << 2) | (1 << 7) | (1 << 8) | (1 << 9) | (1 << 16) | (1 << 17) );
-	if(ret == 0) {
+//	if(ret == 0)
+	{
 		if(stdid == V4L2_STD_NTSC) {
 			printk("%s ntsc\n", __FUNCTION__);
 			cif_fmt_val |= INPUT_MODE_NTSC;
@@ -2105,9 +2112,9 @@ static void rk_camera_setup_format_tv_in(struct soc_camera_device *icd, __u32 ho
 			cif_fmt_val |= INPUT_MODE_PAL;
 		}
 		else {
-			printk("%s unkown std, set as pal\n", __FUNCTION__);
-			//	cif_fmt_val |= INPUT_MODE_NTSC;
-			cif_fmt_val |= INPUT_MODE_PAL;
+			printk("%s unkown std, set as NTSC\n", __FUNCTION__);
+			cif_fmt_val |= INPUT_MODE_NTSC;
+			//cif_fmt_val |= INPUT_MODE_PAL;
 		}
 		cif_fmt_val |= (1 << 9);
 	}
