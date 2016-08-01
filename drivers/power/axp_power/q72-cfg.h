@@ -39,7 +39,7 @@
 	ldo5：
 		AXP22:700~3300,100/step
 */
-#define AXP_LDO5_VALUE		2800
+#define AXP_LDO5_VALUE		0
 /*
 	ldo6：
 		AXP22:700~3300,100/step
@@ -54,7 +54,7 @@
 	ldo8：
 		AXP22:700~3300,100/step
 */
-#define AXP_LDO8_VALUE		2500
+#define AXP_LDO8_VALUE		1800
 /*
 	ldo9：
 		AXP22:700~3300,100/step
@@ -69,7 +69,7 @@
 	ldo11：
 		AXP22:700~3300,100/step
 */
-#define AXP_LDO11_VALUE		0
+#define AXP_LDO11_VALUE		2500
 /*
 	ldo12：
 		AXP22:700~1400,100/step
@@ -107,7 +107,7 @@
 
 /*电池容量，mAh：根据实际电池容量来定义，对库仑计方法来说
 这个参数很重要，必须配置*/
-#define BATCAP				4000
+#define BATCAP				2300
 
 /*初始化电池内阻，mΩ：一般在100~200之间，不过最好根据实际
 测试出来的确定，方法是打开打印信息，不接电池烧好固件后，
@@ -127,9 +127,9 @@
 		AXP22:300~2550,100/step
 */
 /*开机充电电流，uA*/
-#define STACHGCUR			600*1000
+#define STACHGCUR			900*1000
 /*关屏充电电流，uA*/
-#define EARCHGCUR			800*1000
+#define EARCHGCUR			900*1000
 /*休眠充电电流，uA*/
 #define SUSCHGCUR			900*1000
 /*关机充电电流，uA*/
@@ -144,7 +144,7 @@
 /*
 	AXP22:10\15
 */ 
-#define ENDCHGRATE			10
+#define ENDCHGRATE			50
 /*关机电压，mV*/
 /*
 	系统设计的关机过后的电池端电压，需要与关机百分比、
@@ -272,7 +272,7 @@
 /*
 	AXP22:0-关闭，1-打开
 */
-#define BATCAPCORRENT			0
+#define BATCAPCORRENT			1
 /* 充电完成后，充电输出使能*/
 /*
 	AXP22:0-关闭，1-打开
