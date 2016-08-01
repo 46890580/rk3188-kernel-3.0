@@ -239,6 +239,8 @@ static void adv7180_pwr_ctl(struct soc_camera_device *icd, bool onoff)
 		msleep(100);
 	}
 
+	blocking_notifier_call_chain(&notifier_list, onoff, NULL);
+
 	return;
 }
 
