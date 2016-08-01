@@ -1320,7 +1320,12 @@ static struct rk29_keys_button key_button[] = {
 		.gpio           = INVALID_GPIO,
 		.active_low     = PRESS_LEV_LOW,
 	},
-
+	{
+		.desc           = "eject",
+		.code           = KEY_EJECTCD,
+		.gpio           = RK30_PIN1_PA6,
+		.active_low     = PRESS_LEV_LOW,
+	},
 };
 
 struct rk29_keys_platform_data rk29_keys_pdata = {
