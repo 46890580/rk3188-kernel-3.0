@@ -234,6 +234,7 @@ typedef enum _TRSP_MODE
 struct layer_par {
 	char name[5];
 	int id;
+	int ref_count;
 	bool state; 	//on or off
 	u32	pseudo_pal[16];
 	u32 y_offset;       //yuv/rgb offset  -->LCDC_WINx_YRGB_MSTx
@@ -368,6 +369,8 @@ struct rk_lcdc_device_driver{
 	struct sw_sync_timeline *timeline;
 	int			timeline_max;
 	int			suspend_flag;
+	struct rk_reg_data 	*front_regs;
+	struct list_head	saved_list;
 	struct list_head	update_regs_list;
 	struct mutex		update_regs_list_lock;
 	struct kthread_worker	update_regs_worker;
