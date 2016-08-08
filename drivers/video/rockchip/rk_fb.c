@@ -375,6 +375,8 @@ static int rk_fb_open(struct fb_info *info,int user)
     int layer_id;
   
     layer_id = dev_drv->fb_get_layer(dev_drv,info->fix.id);
+
+    dev_drv->layer_par[layer_id]->ref_count++;
     if(dev_drv->layer_par[layer_id]->state)
     {
     	return 0;    // if this layer aready opened ,no need to reopen
@@ -415,29 +417,33 @@ static int rk_fb_close(struct fb_info *info,int user)
 	if(layer_id >= 0)
 	{
 		par = dev_drv->layer_par[layer_id];
-		info->fix.smem_start = par->reserved;
+		par->ref_count--;
 
-		info->var.xres = dev_drv->screen0->x_res;
-		info->var.yres = dev_drv->screen0->y_res;
-		info->var.grayscale |= (info->var.xres<<8) + (info->var.yres<<20);
+		if (!par->ref_count) {
+			info->fix.smem_start = par->reserved;
+
+			info->var.xres = dev_drv->screen0->x_res;
+			info->var.yres = dev_drv->screen0->y_res;
+			info->var.grayscale |= (info->var.xres<<8) + (info->var.yres<<20);
 #ifdef  CONFIG_LOGO_LINUX_BMP
-		info->var.bits_per_pixel = 32;
+			info->var.bits_per_pixel = 32;
 #else
-		info->var.bits_per_pixel = 16;
+			info->var.bits_per_pixel = 16;
 #endif
-		info->fix.line_length  = (info->var.xres)*(info->var.bits_per_pixel>>3);
-		info->var.xres_virtual = info->var.xres;
-		info->var.yres_virtual = info->var.yres;
-		info->var.width =  dev_drv->screen0->width;
-		info->var.height = dev_drv->screen0->height;
-		info->var.pixclock = dev_drv->pixclock;
-		info->var.left_margin = dev_drv->screen0->left_margin;
-		info->var.right_margin = dev_drv->screen0->right_margin;
-		info->var.upper_margin = dev_drv->screen0->upper_margin;
-		info->var.lower_margin = dev_drv->screen0->lower_margin;
-		info->var.vsync_len = dev_drv->screen0->vsync_len;
-		info->var.hsync_len = dev_drv->screen0->hsync_len;
-    }
+			info->fix.line_length  = (info->var.xres)*(info->var.bits_per_pixel>>3);
+			info->var.xres_virtual = info->var.xres;
+			info->var.yres_virtual = info->var.yres;
+			info->var.width =  dev_drv->screen0->width;
+			info->var.height = dev_drv->screen0->height;
+			info->var.pixclock = dev_drv->pixclock;
+			info->var.left_margin = dev_drv->screen0->left_margin;
+			info->var.right_margin = dev_drv->screen0->right_margin;
+			info->var.upper_margin = dev_drv->screen0->upper_margin;
+			info->var.lower_margin = dev_drv->screen0->lower_margin;
+			info->var.vsync_len = dev_drv->screen0->vsync_len;
+			info->var.hsync_len = dev_drv->screen0->hsync_len;
+		}
+	}
 	
     	return 0;
 }
