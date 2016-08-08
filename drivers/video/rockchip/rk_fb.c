@@ -48,7 +48,6 @@ static int hdmi_switch_complete = 0;
 static int fence_wait_begin = 0;
 static int hdmi_xsize = 0;
 static int hdmi_ysize = 0;
-struct list_head saved_list;
 
 #if defined(CONFIG_FB_MIRRORING)
 
@@ -646,7 +645,6 @@ void rk_fb_fence_wait(struct sync_fence *fence)
                 printk("error waiting on fence\n");
 }
 
-static struct rk_reg_data *front_regs;
 static bool rk_fb_take_effect(struct rk_lcdc_device_driver * dev_drv, u32 *layer_addr)
 {
 	int i;
@@ -696,10 +694,15 @@ static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_re
 				dev_drv->open(dev_drv,layer_id, 0);
 			continue;
 		}
-		if (regs->dma_buf_data[i].acq_fence) {
-			rk_fb_fence_wait(regs->dma_buf_data[i].acq_fence);
-			sync_fence_put(regs->dma_buf_data[i].acq_fence);
+
+		ret = ion_phys(inf->ion_client, regs->dma_buf_data[i].hdl, &phy_addr, &len);
+		if (ret < 0) {
+			dev_err(info->dev, "ion map to get phy addr failed\n");
+			continue;
 		}
+
+		if (regs->dma_buf_data[i].acq_fence)
+			rk_fb_fence_wait(regs->dma_buf_data[i].acq_fence);
 		if(!dev_drv->layer_par[layer_id]->state)
 			dev_drv->open(dev_drv,layer_id, 1);
 
@@ -712,12 +715,6 @@ static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_re
 		var->xres = area_par->xact;
 		var->yres = area_par->yact;
 
-		ret = ion_phys(inf->ion_client, regs->dma_buf_data[i].hdl, &phy_addr, &len);
-		if (ret < 0) {
-			dev_err(info->dev, "ion map to get phy addr failed\n");
-			ion_free(inf->ion_client, regs->dma_buf_data[i].hdl);
-			return;
-		}
 		fix->smem_start = phy_addr;
 		fix->mmio_start = fix->smem_start + var->xres_virtual * var->yres_virtual;
 		fix->smem_len = len;
@@ -725,7 +722,6 @@ static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_re
 		info->fbops->fb_pan_display(var, info);
 
 		layer_addr[i] = win->y_addr;
-		regs->dma_buf_data[i].acq_fence = acq_fence;
 	}
 
 	if(dev_drv->lcdc_reg_update)
@@ -752,15 +748,19 @@ static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_re
 	}
 	sw_sync_timeline_inc(dev_drv->timeline, 1);
 
-	if (front_regs) {
+	if (dev_drv->front_regs) {
+		struct rk_reg_data *front_regs = dev_drv->front_regs;
+
 		for (i = 0; i < dev_drv->num_layer; i++) {
-			if (regs->dma_buf_data[i].hdl)
-				ion_free(inf->ion_client, regs->dma_buf_data[i].hdl);
+			if (front_regs->dma_buf_data[i].hdl)
+				ion_free(inf->ion_client, front_regs->dma_buf_data[i].hdl);
+			if (front_regs->dma_buf_data[i].acq_fence)
+				sync_fence_put(front_regs->dma_buf_data[i].acq_fence);
 		}
 
 		kfree(front_regs);
 	}
-	front_regs = regs;
+	dev_drv->front_regs = regs;
 }
 
 static void rk_fb_update_regs_handler(struct kthread_work *work)
@@ -768,16 +768,15 @@ static void rk_fb_update_regs_handler(struct kthread_work *work)
 	struct rk_lcdc_device_driver * dev_drv =
 			container_of(work, struct rk_lcdc_device_driver, update_regs_work);
 	struct rk_reg_data *data, *next;
-	//struct list_head saved_list;
 
 	mutex_lock(&dev_drv->update_regs_list_lock);
-	saved_list = dev_drv->update_regs_list;
-	list_replace_init(&dev_drv->update_regs_list, &saved_list);
+	dev_drv->saved_list = dev_drv->update_regs_list;
+	list_replace_init(&dev_drv->update_regs_list, &dev_drv->saved_list);
 	mutex_unlock(&dev_drv->update_regs_list_lock);
 
-	list_for_each_entry_safe(data, next, &saved_list, list) {
-		rk_fb_update_reg(dev_drv,data);
+	list_for_each_entry_safe(data, next, &dev_drv->saved_list, list) {
 		list_del(&data->list);
+		rk_fb_update_reg(dev_drv,data);
 	}
 }
 
@@ -890,7 +889,7 @@ static int rk_fb_get_list_stat(struct rk_lcdc_device_driver *dev_drv)
 {
 	int i,j;
 	i = list_empty(&dev_drv->update_regs_list);
-	j = list_empty(&saved_list);
+	j = list_empty(&dev_drv->saved_list);
 	if((i == 1)&&(j == 1))
 		return 1;
 	else
@@ -1008,9 +1007,8 @@ static int rk_fb_set_config(struct rk_lcdc_device_driver *dev_drv, struct rk_fb_
 				__func__, PTR_ERR(regs->dma_buf_data[i].hdl), area_par->ion_fd);
 			continue;
 		}
-		if (area_par->acq_fence_fd >= 0) {
+		if (area_par->acq_fence_fd >= 0)
 			regs->dma_buf_data[i].acq_fence = sync_fence_fdget(area_par->acq_fence_fd);
-		}
 
 		sprintf(fence_name, "fence%d", i);
 		req_cfg->rel_fence_fd[i] = get_unused_fd();
