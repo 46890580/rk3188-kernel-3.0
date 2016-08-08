@@ -633,7 +633,7 @@ void rk_fb_fence_wait(struct sync_fence *fence)
 
 	if (!fence)
 		return;
-        err = sync_fence_wait(fence, 1000);
+        err = sync_fence_wait(fence, -1);
 
         if (err >= 0)
                 return;
@@ -683,7 +683,9 @@ static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_re
 		struct rk_fb_win_par *win_par = &req_cfg->win_par[i];
 		struct rk_fb_area_par *area_par = &win_par->area_par[0];
 		struct layer_par *win = dev_drv->layer_par[i];
-		struct fb_info *info = rk_get_fb(i);
+		int fb_base = (dev_drv->screen_ctr_info->prop == EXTEND) ?
+				 (inf->num_fb / inf->num_lcdc) : 0;
+		struct fb_info *info = rk_get_fb(fb_base + i);
 		struct fb_var_screeninfo *var = &info->var;
 		struct fb_fix_screeninfo *fix = &info->fix;
 		int layer_id = dev_drv->fb_get_layer(dev_drv,info->fix.id);
@@ -727,16 +729,6 @@ static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_re
 	if(dev_drv->lcdc_reg_update)
 		dev_drv->lcdc_reg_update(dev_drv);
 
-	#if defined(CONFIG_RK_HDMI)
-	#if defined(CONFIG_DUAL_LCDC_DUAL_DISP_IN_KERNEL)
-	if(hdmi_get_hotplug() == HDMI_HPD_ACTIVED) {
-		if (dev_drv_ext) {
-			if(dev_drv_ext->lcdc_reg_update)
-				dev_drv_ext->lcdc_reg_update(dev_drv_ext);
-		}
-	}
-	#endif
-	#endif
 	timestamp = dev_drv->vsync_info.timestamp;
 	while (rk_fb_take_effect(dev_drv, layer_addr) && count--) {
 		timeout = wait_event_interruptible_timeout(dev_drv->vsync_info.wait,
@@ -838,41 +830,6 @@ static int rk_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
     	}
 
 	dev_drv->pan_display(dev_drv,layer_id);
-	#if defined(CONFIG_RK_HDMI)
-		#if defined(CONFIG_DUAL_LCDC_DUAL_DISP_IN_KERNEL)
-			if((hdmi_get_hotplug() == HDMI_HPD_ACTIVED) && (hdmi_switch_complete))
-			{
-				if(inf->num_fb >= 2)
-				{
-					extend_fb_id = get_extend_fb_id(info->fix.id);
-					info2 = inf->fb[(inf->num_fb>>1) + extend_fb_id];
-					dev_drv1 = (struct rk_lcdc_device_driver * )info2->par;
-					layer_id2 = dev_drv1->fb_get_layer(dev_drv1,info2->fix.id);
-					par2 = dev_drv1->layer_par[layer_id2];
-					par2->y_offset = par->y_offset;
-					par2->c_offset = par->c_offset;
-					//memcpy(info2->screen_base+par2->y_offset,info->screen_base+par->y_offset,
-					//	var->xres*var->yres*var->bits_per_pixel>>3);
-					#if defined(CONFIG_FB_ROTATE) || !defined(CONFIG_THREE_FB_BUFFER)
-						#if defined(CONFIG_ARCH_RK3026) || defined(CONFIG_ARCH_RK3188)
-						//RGA support copying RGB to RGB,but not support YUV to YUV if rotate
-						fb_copy_by_rga(info2,info,par->y_offset);
-						#else
-						fb_copy_by_ipp(info2,info,par->y_offset,par->c_offset);
-						par2->cbr_start = info2->fix.mmio_start;
-						#endif
-					#endif
-					dev_drv1->pan_display(dev_drv1,layer_id2);
-					//queue_delayed_work(inf->workqueue, &inf->delay_work,0);
-					if (!(var->grayscale & RK_FB_CFG_DONE_FLAG)) {
-						if(dev_drv1->lcdc_reg_update)
-							dev_drv1->lcdc_reg_update(dev_drv1);
-					}
-				}
-			}
-		#endif
-	#endif
-
 	#ifdef	CONFIG_FB_MIRRORING
 	if(video_data_to_mirroring!=NULL)
 		video_data_to_mirroring(info,NULL);
@@ -984,7 +941,7 @@ static int rk_fb_set_config(struct rk_lcdc_device_driver *dev_drv, struct rk_fb_
 	struct sync_pt *retire_sync_pt;
 	char fence_name[20];
 	struct rk_reg_data *regs;
-	int i, ret;
+	int i,j, ret;
 
 	regs = kzalloc(sizeof(struct rk_reg_data), GFP_KERNEL);
 	if (!regs)
@@ -1011,6 +968,9 @@ static int rk_fb_set_config(struct rk_lcdc_device_driver *dev_drv, struct rk_fb_
 			regs->dma_buf_data[i].acq_fence = sync_fence_fdget(area_par->acq_fence_fd);
 
 		sprintf(fence_name, "fence%d", i);
+		for(j = 0;j < RK_MAX_BUF_NUM;j++) {
+            req_cfg->rel_fence_fd[j] = -1;
+		}
 		req_cfg->rel_fence_fd[i] = get_unused_fd();
 		if (req_cfg->rel_fence_fd[i] < 0) {
 			printk(KERN_INFO "rel_fence_fd=%d\n",
@@ -1024,6 +984,7 @@ static int rk_fb_set_config(struct rk_lcdc_device_driver *dev_drv, struct rk_fb_
 		sync_fence_install(release_fence[i],
 				req_cfg->rel_fence_fd[i]);
 	}
+	req_cfg->ret_fence_fd = -1;
 	req_cfg->ret_fence_fd = get_unused_fd();
 	if (req_cfg->ret_fence_fd < 0) {
 		pr_err("ret_fence_fd=%d\n", req_cfg->ret_fence_fd);
@@ -1521,64 +1482,6 @@ static int rk_fb_set_par(struct fb_info *info)
 	par->yact = var->yres;
 	par->xvir =  var->xres_virtual;		// virtual resolution	 stride --->LCDC_WINx_VIR
 	par->yvir =  var->yres_virtual;
-	#if defined(CONFIG_RK_HDMI)
-		#if defined(CONFIG_DUAL_LCDC_DUAL_DISP_IN_KERNEL)
-			if((hdmi_get_hotplug() == HDMI_HPD_ACTIVED) && (hdmi_switch_complete))
-			{
-				struct rk_fb_inf *inf = dev_get_drvdata(info->device);
-				int extend_fb_id = get_extend_fb_id(info->fix.id);
-				struct fb_info * info2 = inf->fb[(inf->num_fb>>1) + extend_fb_id];
-				struct rk_lcdc_device_driver * dev_drv1  = (struct rk_lcdc_device_driver * )info2->par;
-				int layer_id2 = dev_drv->fb_get_layer(dev_drv1,info2->fix.id);
-				struct layer_par *par2 = dev_drv1->layer_par[layer_id2];
-				if(info != info2)
-				{
-					if(par->xact < par->yact)
-					{
-						par2->xact = par->yact;
-						par2->yact = par->xact;
-						par2->xvir = par->yact;
-						info2->var.xres = var->yres;
-						info2->var.yres = var->xres;
-						info2->var.xres_virtual = var->yres;
-						info2->var.yres_virtual = var->xres;
-					}
-					else
-					{
-						par2->xact = par->xact;
-						par2->yact = par->yact;
-						par2->xvir = par->xvir;
-						info2->var.xres = var->xres;
-						info2->var.yres = var->yres;
-						info2->var.xres_virtual = var->xres_virtual;
-						info2->var.yres_virtual = var->yres_virtual;
-					}
-				#if !defined(CONFIG_FB_ROTATE) && defined(CONFIG_THREE_FB_BUFFER) 
-					par2->smem_start = par->smem_start;
-					par2->cbr_start = par->cbr_start;
-				#endif
-					//the display image of the primary screen is no full screen size when play video that is YUV type
-					if(par->xpos != 0 || par->ypos != 0) {
-						par2->xsize = hdmi_xsize*par->xsize/screen->x_res;
-						par2->ysize = hdmi_ysize*par->ysize/screen->y_res;
-						par2->xpos = ((dev_drv1->cur_screen->x_res - hdmi_xsize)>>1) + hdmi_xsize*par->xpos/screen->x_res;
-						par2->ypos = ((dev_drv1->cur_screen->y_res - hdmi_ysize)>>1) + hdmi_ysize*par->ypos/screen->y_res;
-					}
-					else {	//the display image of the primary screen is full screen size
-						par2->xpos = (dev_drv1->cur_screen->x_res - hdmi_xsize)>>1;
-						par2->ypos = (dev_drv1->cur_screen->y_res - hdmi_ysize)>>1;
-						par2->xsize = hdmi_xsize;
-						par2->ysize = hdmi_ysize;
-					}
-
-					par2->format = par->format;
-					info2->var.nonstd &= 0xffffff00;
-					info2->var.nonstd |= data_format;
-					dev_drv1->set_par(dev_drv1,layer_id2);
-				}
-			}
-		#endif
-	#endif
 	dev_drv->set_par(dev_drv,layer_id);
 
 	return 0;
