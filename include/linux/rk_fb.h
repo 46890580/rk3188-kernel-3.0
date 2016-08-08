@@ -333,6 +333,7 @@ struct rk_fb_dma_buf_data {
 
 struct rk_reg_data{
 	struct list_head list; 
+	struct rk_fb_win_cfg_data reg_cfg;
 	struct rk_fb_dma_buf_data dma_buf_data[RK30_MAX_LAYER_SUPPORT];
 };
 
@@ -399,8 +400,7 @@ struct rk_lcdc_device_driver{
 	int (*dpi_open)(struct rk_lcdc_device_driver *dev_drv,bool open);
 	int (*dpi_layer_sel)(struct rk_lcdc_device_driver *dev_drv,int layer_id);
 	int (*dpi_status)(struct rk_lcdc_device_driver *dev_drv);
-	unsigned int (*get_dsp_addr)(struct rk_lcdc_device_driver * dev_drv,unsigned int *dsp_addr);
-	
+	unsigned int (*get_dsp_addr)(struct rk_lcdc_device_driver * dev_drv, int layer_id);
 };
 
 struct rk_fb_inf {

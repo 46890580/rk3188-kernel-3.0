@@ -1512,7 +1512,7 @@ int rk3188_lcdc_poll_vblank(struct rk_lcdc_device_driver * dev_drv)
 	return ret;
 }
 
-static int rk3188_lcdc_get_dsp_addr(struct rk_lcdc_device_driver *dev_drv,unsigned int *dsp_addr)
+static int rk3188_lcdc_get_dsp_addr(struct rk_lcdc_device_driver *dev_drv, int layer_id)
 {
 	int timeout;
 	unsigned long flags;
@@ -1520,23 +1520,16 @@ static int rk3188_lcdc_get_dsp_addr(struct rk_lcdc_device_driver *dev_drv,unsign
 	struct rk3188_lcdc_device *lcdc_dev = 
 				container_of(dev_drv,struct rk3188_lcdc_device,driver);    
 
-	spin_lock_irqsave(&dev_drv->cpl_lock,flags);
-	init_completion(&dev_drv->frame_done);
-	spin_unlock_irqrestore(&dev_drv->cpl_lock,flags);
-	timeout = wait_for_completion_timeout(&dev_drv->frame_done,msecs_to_jiffies(dev_drv->cur_screen->ft+5));
-	if(!timeout&&(!dev_drv->frame_done.done))
-	{
-		printk(KERN_ERR "wait for new frame start time out!\n");
-		return -ETIMEDOUT;
-	}
-	
-	if(lcdc_dev->clk_on){
-		dsp_addr[0] = lcdc_readl(lcdc_dev, WIN0_YRGB_MST0);
-		dsp_addr[1] = lcdc_readl(lcdc_dev, WIN1_MST);
-	}
+	if(!lcdc_dev->clk_on)
+		return 0;
+
+	if (layer_id == 0)
+		return lcdc_readl(lcdc_dev, WIN0_YRGB_MST0);
+	else if(layer_id == 1)
+		return lcdc_readl(lcdc_dev, WIN1_MST);
+
 	return 0;
 }
-
 
 static struct layer_par lcdc_layer[] = {
 	[0] = {

@@ -621,17 +621,6 @@ static void hdmi_post_work(struct work_struct *work)
 }
 #endif
 
-void rk_fb_free_dma_buf(struct rk_fb_dma_buf_data *dma_buf_data)
-{
-	struct rk_fb_inf *inf =  platform_get_drvdata(g_fb_pdev);
-
-	if(dma_buf_data->acq_fence)
-		sync_fence_put(dma_buf_data->acq_fence);
-	if (dma_buf_data->hdl)
-		ion_free(inf->ion_client, dma_buf_data->hdl);
-
-	memset(dma_buf_data, 0, sizeof(struct rk_fb_dma_buf_data));
-}
 
 void rk_fb_fence_wait(struct sync_fence *fence)
 {
@@ -651,13 +640,87 @@ void rk_fb_fence_wait(struct sync_fence *fence)
                 printk("error waiting on fence\n");
 }
 
+static struct rk_reg_data *front_regs;
+static bool rk_fb_take_effect(struct rk_lcdc_device_driver * dev_drv, u32 *layer_addr)
+{
+	int i;
+
+	if (!dev_drv->get_dsp_addr) {
+		pr_err("Please implement the ops get_dsp_addr\n");
+		return false;
+	}
+	for(i = 0; i < dev_drv->num_layer; i++) {
+		if (!layer_addr[i])
+			continue;
+		if (layer_addr[i] != dev_drv->get_dsp_addr(dev_drv, i)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+struct fb_info * rk_get_fb(int fb_id);
 static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_reg_data *regs)
 {
+	struct rk_fb_inf *inf = platform_get_drvdata(g_fb_pdev);
+	struct rk_fb_win_cfg_data *req_cfg = &regs->reg_cfg;
+	struct rk_lcdc_device_driver *dev_drv_ext = rk_get_extend_lcdc_drv();
+	ion_phys_addr_t phy_addr;
+	size_t len;
 	int i,ret=0;
-	ktime_t timestamp = dev_drv->vsync_info.timestamp;
+	int timeout;
+	u32 layer_addr[RK_MAX_FB_SUPPORT];
+	ktime_t timestamp;
 
-	for(i = 0; i < dev_drv->num_layer; i++)
-		rk_fb_fence_wait(regs->dma_buf_data[i].acq_fence);
+	int count = 20;
+
+	for (i = 0; i < dev_drv->num_layer; i++) {
+		struct rk_fb_win_par *win_par = &req_cfg->win_par[i];
+		struct rk_fb_area_par *area_par = &win_par->area_par[0];
+		struct layer_par *win = dev_drv->layer_par[i];
+		struct fb_info *info = rk_get_fb(i);
+		struct fb_var_screeninfo *var = &info->var;
+		struct fb_fix_screeninfo *fix = &info->fix;
+		int layer_id = dev_drv->fb_get_layer(dev_drv,info->fix.id);
+		struct sync_fence *acq_fence = NULL;
+
+		if (!regs->dma_buf_data[i].hdl) {
+			if (dev_drv->layer_par[layer_id]->state)
+				dev_drv->open(dev_drv,layer_id, 0);
+			continue;
+		}
+		if (regs->dma_buf_data[i].acq_fence) {
+			rk_fb_fence_wait(regs->dma_buf_data[i].acq_fence);
+			sync_fence_put(regs->dma_buf_data[i].acq_fence);
+		}
+		if(!dev_drv->layer_par[layer_id]->state)
+			dev_drv->open(dev_drv,layer_id, 1);
+
+		var->xoffset = area_par->x_offset;
+		var->yoffset = area_par->y_offset;
+		var->nonstd = area_par->xpos << 8 | area_par->ypos << 20 | area_par->data_format;
+		var->xres_virtual = area_par->xvir;
+		var->yres_virtual = area_par->yvir;
+		var->grayscale = area_par->xsize << 8 | area_par->ysize << 20 | RK_FB_CFG_DONE_FLAG;
+		var->xres = area_par->xact;
+		var->yres = area_par->yact;
+
+		ret = ion_phys(inf->ion_client, regs->dma_buf_data[i].hdl, &phy_addr, &len);
+		if (ret < 0) {
+			dev_err(info->dev, "ion map to get phy addr failed\n");
+			ion_free(inf->ion_client, regs->dma_buf_data[i].hdl);
+			return;
+		}
+		fix->smem_start = phy_addr;
+		fix->mmio_start = fix->smem_start + var->xres_virtual * var->yres_virtual;
+		fix->smem_len = len;
+		info->fbops->fb_set_par(info);
+		info->fbops->fb_pan_display(var, info);
+
+		layer_addr[i] = win->y_addr;
+		regs->dma_buf_data[i].acq_fence = acq_fence;
+	}
 
 	if(dev_drv->lcdc_reg_update)
 		dev_drv->lcdc_reg_update(dev_drv);
@@ -665,25 +728,33 @@ static void rk_fb_update_reg(struct rk_lcdc_device_driver * dev_drv,struct rk_re
 	#if defined(CONFIG_RK_HDMI)
 	#if defined(CONFIG_DUAL_LCDC_DUAL_DISP_IN_KERNEL)
 	if(hdmi_get_hotplug() == HDMI_HPD_ACTIVED) {
-		struct rk_lcdc_device_driver *dev_drv_ext = rk_get_extend_lcdc_drv();
-
 		if (dev_drv_ext) {
 			if(dev_drv_ext->lcdc_reg_update)
 				dev_drv_ext->lcdc_reg_update(dev_drv_ext);
-			wait_event_interruptible_timeout(dev_drv_ext->vsync_info.wait,
-					!ktime_equal(timestamp, dev_drv_ext->vsync_info.timestamp),msecs_to_jiffies(dev_drv_ext->cur_screen->ft+5));
 		}
 	}
 	#endif
 	#endif
+	timestamp = dev_drv->vsync_info.timestamp;
+	while (rk_fb_take_effect(dev_drv, layer_addr) && count--) {
+		timeout = wait_event_interruptible_timeout(dev_drv->vsync_info.wait,
+			!ktime_equal(timestamp, dev_drv->vsync_info.timestamp),msecs_to_jiffies(50));
+	};
 
-	ret = wait_event_interruptible_timeout(dev_drv->vsync_info.wait,
-			!ktime_equal(timestamp, dev_drv->vsync_info.timestamp),msecs_to_jiffies(dev_drv->cur_screen->ft+5));
-
+	if (timeout < 0) {
+		pr_err("wait for vsync timeout %d\n", timeout);
+	}
 	sw_sync_timeline_inc(dev_drv->timeline, 1);
 
-	for(i = 0; i < dev_drv->num_layer; i++)
-		rk_fb_free_dma_buf(&regs->dma_buf_data[i]);
+	if (front_regs) {
+		for (i = 0; i < dev_drv->num_layer; i++) {
+			if (regs->dma_buf_data[i].hdl)
+				ion_free(inf->ion_client, regs->dma_buf_data[i].hdl);
+		}
+
+		kfree(front_regs);
+	}
+	front_regs = regs;
 }
 
 static void rk_fb_update_regs_handler(struct kthread_work *work)
@@ -701,7 +772,6 @@ static void rk_fb_update_regs_handler(struct kthread_work *work)
 	list_for_each_entry_safe(data, next, &saved_list, list) {
 		rk_fb_update_reg(dev_drv,data);
 		list_del(&data->list);
-		kfree(data);
 	}
 }
 
@@ -900,10 +970,8 @@ static int rk_fb_data_fmt(int data_format, int bits_per_pixel)
         return fb_data_fmt;
 }
 
-struct fb_info * rk_get_fb(int fb_id);
 static int rk_fb_set_config(struct rk_lcdc_device_driver *dev_drv, struct rk_fb_win_cfg_data *req_cfg)
 {
-	int i, ret;
 	struct rk_fb_inf *inf = platform_get_drvdata(g_fb_pdev);
 	struct sync_fence *release_fence[RK_MAX_BUF_NUM];
 	struct sync_fence *retire_fence;
@@ -911,66 +979,32 @@ static int rk_fb_set_config(struct rk_lcdc_device_driver *dev_drv, struct rk_fb_
 	struct sync_pt *retire_sync_pt;
 	char fence_name[20];
 	struct rk_reg_data *regs;
+	int i, ret;
 
 	regs = kzalloc(sizeof(struct rk_reg_data), GFP_KERNEL);
 	if (!regs)
 		return -ENOMEM;
 
+	memcpy(&regs->reg_cfg, req_cfg, sizeof(*req_cfg));
 	dev_drv->timeline_max++;
 	for(i = 0; i < dev_drv->num_layer; i++) {
 		struct rk_fb_win_par *win_par = &req_cfg->win_par[i];
 		struct rk_fb_area_par *area_par = &win_par->area_par[0];
-		struct fb_info *info = rk_get_fb(i);
-		struct fb_var_screeninfo *var = &info->var;
-		struct fb_fix_screeninfo *fix = &info->fix;
-		int layer_id = dev_drv->fb_get_layer(dev_drv,info->fix.id);
-		ion_phys_addr_t phy_addr;
-		struct ion_handle *hdl;
-		int ion_fd;
-		size_t len;
 
 		if (!area_par->ion_fd) {
-			if (dev_drv->layer_par[layer_id]->state)
-				dev_drv->open(dev_drv,layer_id, 0);
 			continue;
 		}
 
-		if(!dev_drv->layer_par[layer_id]->state)
-			dev_drv->open(dev_drv,layer_id, 1);
-
-		var->xoffset = area_par->x_offset;
-		var->yoffset = area_par->y_offset;
-		var->nonstd = area_par->xpos << 8 | area_par->ypos << 20 | area_par->data_format;
-		var->xres_virtual = area_par->xvir;
-		var->yres_virtual = area_par->yvir;
-		var->grayscale = area_par->xsize << 8 | area_par->ysize << 20 | RK_FB_CFG_DONE_FLAG;
-		var->xres = area_par->xact;
-		var->yres = area_par->yact;
-
-		ion_fd = area_par[0].ion_fd;
-		hdl = ion_import_dma_buf(inf->ion_client, ion_fd);
-		if (IS_ERR(hdl)) {
-			pr_info("%s: Could not import handle:"
-					" %ld\n", __func__, (long)hdl);
-			/*return -EINVAL; */
-			break;
+		regs->dma_buf_data[i].hdl = ion_import_dma_buf(inf->ion_client,
+						area_par->ion_fd);
+		if (IS_ERR(regs->dma_buf_data[i].hdl)) {
+			pr_info("%s: Could not import handle: %d fd=%d\n",
+				__func__, PTR_ERR(regs->dma_buf_data[i].hdl), area_par->ion_fd);
+			continue;
 		}
-		ret = ion_phys(inf->ion_client, hdl, &phy_addr, &len);
-		if (ret < 0) {
-			dev_err(info->dev, "ion map to get phy addr failed\n");
-			ion_free(inf->ion_client, hdl);
-			return -ENOMEM;
+		if (area_par->acq_fence_fd >= 0) {
+			regs->dma_buf_data[i].acq_fence = sync_fence_fdget(area_par->acq_fence_fd);
 		}
-		fix->smem_start = phy_addr;
-		fix->mmio_start = fix->smem_start + var->xres_virtual * var->yres_virtual;
-		fix->smem_len = len;
-		info->fbops->fb_set_par(info);
-		info->fbops->fb_pan_display(var, info);
-
-		regs->dma_buf_data[i].hdl = hdl;
-		if (area_par->acq_fence_fd >= 0)
-		regs->dma_buf_data[i].acq_fence =
-			sync_fence_fdget(area_par->acq_fence_fd);
 
 		sprintf(fence_name, "fence%d", i);
 		req_cfg->rel_fence_fd[i] = get_unused_fd();
