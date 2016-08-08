@@ -150,7 +150,6 @@ struct rk_display_ops hdmi_display_ops = {
 	.getscale = hdmi_get_scale,
 };
 
-#if 1
 static int hdmi_display_probe(struct rk_display_device *device, void *devdata)
 {
 	device->owner = THIS_MODULE;
@@ -170,16 +169,14 @@ static struct rk_display_driver display_hdmi = {
 	.probe = hdmi_display_probe,
 };
 
-static struct rk_display_device *display_device_hdmi = NULL;
-
 void hdmi_register_display_sysfs(struct hdmi *hdmi, struct device *parent)
 {
-	display_device_hdmi = rk_display_device_register(&display_hdmi, parent, hdmi);
+	hdmi->ddev =
+	    rk_display_device_register(&display_hdmi, parent, hdmi);
 }
 
 void hdmi_unregister_display_sysfs(struct hdmi *hdmi)
 {
-	if(display_device_hdmi)
-		rk_display_device_unregister(display_device_hdmi);
+	if (hdmi->ddev)
+		rk_display_device_unregister(hdmi->ddev);
 }
-#endif

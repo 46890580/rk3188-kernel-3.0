@@ -99,7 +99,6 @@ void hdmi_sys_remove(void)
 	if(hdmi->set_vif)
 		hdmi->set_vif(hdmi->lcdc->screen1,0);
 	rk_fb_switch_screen(hdmi->lcdc->screen1, 0, hdmi->lcdc->id);
-	kobject_uevent_env(&hdmi->dev->kobj, KOBJ_REMOVE, envp);
 
 	#ifdef CONFIG_SWITCH
 	/*if(audio_need)*/
@@ -120,6 +119,8 @@ void hdmi_sys_remove(void)
 	codec_set_spk(1);
 #endif
 	#endif
+	kobject_uevent_env(&hdmi->ddev->dev->kobj, KOBJ_CHANGE, envp);
+	kobject_uevent_env(&hdmi->ddev->dev->kobj, KOBJ_REMOVE, envp);
 }
 
 static void hdmi_sys_sleep(void)
@@ -149,10 +150,10 @@ static int hdmi_process_command(void)
 				mutex_lock(&hdmi->enable_mutex);
 				if(!hdmi->enable || hdmi->suspend)
 				{
+					hdmi->hotplug = HDMI_HPD_REMOVED;
 					if(hdmi->hotplug == HDMI_HPD_ACTIVED)
 						hdmi_sys_remove();
 					hdmi->state = HDMI_SLEEP;
-					hdmi->hotplug = HDMI_HPD_REMOVED;
 					hdmi->remove();
 					state = HDMI_SLEEP;
 				}
@@ -220,8 +221,8 @@ void hdmi_work(struct work_struct *work)
 			hdmi->state = READ_PARSE_EDID;
 		}
 		else if(hdmi->hotplug == HDMI_HPD_ACTIVED) {
-			hdmi_sys_remove();
 			hdmi->hotplug = hotplug;
+			hdmi_sys_remove();
 			if(hotplug == HDMI_HPD_REMOVED)
 				hdmi_sys_sleep();
 			else {
@@ -254,7 +255,7 @@ void hdmi_work(struct work_struct *work)
 				if(rc == HDMI_ERROR_SUCESS)
 				{
 					hdmi->state = SYSTEM_CONFIG;	
-					kobject_uevent_env(&hdmi->dev->kobj, KOBJ_ADD, envp);
+					kobject_uevent_env(&hdmi->ddev->dev->kobj, KOBJ_ADD, envp);
 					hdmi_dbg(hdmi->dev,"base_audio_support =%d,sink_hdmi = %d\n",hdmi->edid.base_audio_support,hdmi->edid.sink_hdmi );
 					#ifdef CONFIG_SWITCH
 					/* if(hdmi->edid.base_audio_support == 1 &&  hdmi->edid.sink_hdmi == 1) */
@@ -314,6 +315,8 @@ void hdmi_work(struct work_struct *work)
 					else
 						hdmi->state = PLAY_BACK;
 				}
+				kobject_uevent_env(&hdmi->ddev->dev->kobj,
+						   KOBJ_CHANGE, envp);
 				break;
 			case CONFIG_AUDIO:
 				rc = hdmi->config_audio(&(hdmi->audio));

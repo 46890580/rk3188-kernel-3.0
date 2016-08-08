@@ -260,6 +260,7 @@ struct hdmi {
 	int				regbase_phy;
 	int				regsize_phy;
 	struct rk_lcdc_device_driver *lcdc;
+	struct rk_display_device *ddev;
 	
 	#ifdef CONFIG_SWITCH
 	struct switch_dev	switch_hdmi;
